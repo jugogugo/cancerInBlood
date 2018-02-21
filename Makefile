@@ -5,5 +5,5 @@ all:
 
 publish:
 	git add docs
-	git commit -am "Automatic generation of website"
+	git commit -am "Automatic generation of website https://jugogugo.github.io/cancerInBlood/"
 	git push
