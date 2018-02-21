@@ -1,17 +1,132 @@
 ---
 title: 'Cancer related methylation effects in blood'
-output: html_document
+author: 'Juozas Gordevičius'
+output: 
+ html_document:
+  toc: true
+  toc_float: true
 ---
 
-# Cancer related methylation changes effects in whole blood 
+# The background
 
-Repeat the analysis of the following datasets:
+Now that we know some basic R and design of basic experiments, we can try to 
+answer simple questions. 
+
+We will use publically available data to answer a compelling question:
+
+- Is there a difference in blood DNA modification between cancer patients and healthy individuals?
+- Let's look into three different datasets and try to find a pattern.
+
+# The data
+
+Three different datasets pertaining to different types of cancer are available
 
 - [GSE50409](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50409)
 - [GSE30229](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE30229)
 - [GSE19711](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE19711)
 
 
+## The platform
 
-# The hypothesis
+Illumina 27k is microarrays have ~ 27.000 probes. Each of the probes interrogates a CG
+dinucleotide in the genome. Each probe yields two signals: the methylation intensity (M) and unmethylation intensity (U). The final modification score is defined as 
+
+$$
+\beta = \frac{M}{M+U}
+$$
+
+Read this paper for better understanding:
+
+- [Beta vs M-value](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-587)
+
+
+# The workflow
+
+- Proceed in small steps
+- Read online as much as you can
+- Send pull requests (PRs) often
+- I will comment and suggest further directions
+
+## Step 1 - getting started
+
+- Choose your group mates
+- Choose the dataset you are going to analyse
+- Fork this repo
+- Enter your name in corresponding Rmd file
+- You can create a slack channel for discussions within your group
+- Send PR so that I see how the groups develop
+
+## Step 2
+
+Minfi is the main tool for processing Illumina methylation arrays. Read the guides!
+
+- [Minfi tutorial](https://www.bioconductor.org/help/course-materials/2014/BioC2014/minfi_BioC2014.pdf)
+- [The minfi user's guide](https://bioconductor.org/packages/release/bioc/vignettes/minfi/inst/doc/minfi.pdf)
+
+GEOQuery is a good tool to download data from GEO. But may not be the best solution. A `file.download` command may be a good alternative.
+
+- [GEOQuery](https://bioconductor.org/packages/release/bioc/html/GEOquery.html)
+
+Write the code that prepares the data:
+
+- Automatically download the data from GEO
+
+- Obtain the matrix of beta values where each row corresponds to probes and each column corresponds to samples
+
+- How many samples and how many probes do you have in the data?
+
+- How are the beta values distributed?
+
+- Do your probes have names?
+
+- Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
+
+- Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
+
+- Send PR!
+
+## Step 3
+
+Start with the most basic approach
+
+- For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+
+- From the t-test, obtain the p value.
+
+- Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+
+- Performance-wise, how long will it take to compute the test for all probes?
+
+- Can you suggest a faster alternative for computation?
+
+- Send PR!
+
+## Step 4
+
+Let's deal with the p values.
+
+- What is multiple hypothesis testing?
+
+- How should we adjust for multiple hypothesis testing in our case?
+
+- Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
+
+- Where are these probes? What genes are they related to? 
+
+- Send PR!
+
+## Next steps
+
+Once we get here, we can work on the other issues:
+
+- Thousands of t-tests can be computed at once within seconds. How?
+
+- Some samples could be outliers messing up our results. How to detect outliers?
+
+- Remember that the experiment may have more than one variable (disease). Age may be a factor two. How can we account for differences in age?
+
+- Blood cellular composition may be an issue too. Maybe the differences we observe between patient groups are not actual methylation differences but artefacts of varying blood cellular composition? How shall we deal with that?
+
+- Once we have analysis of all three datasets, can we pull them all together and make conclusions?
+
 
