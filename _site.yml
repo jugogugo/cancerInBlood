@@ -1,0 +1,13 @@
+name: "cancerInBlood"
+navbar:
+  title: "Cancer Effects in Blood"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "GSE19711"
+      href: GSE19711.html
+    - text: "GSE30229"
+      href: GSE30229.html
+    - text: "GSE50409"
+      href: GSE50409.html
+  

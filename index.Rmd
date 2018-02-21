@@ -1,0 +1,17 @@
+---
+title: 'Cancer related methylation effects in blood'
+output: html_document
+---
+
+# Cancer related methylation changes effects in whole blood 
+
+Repeat the analysis of the following datasets:
+
+- [GSE50409](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE50409)
+- [GSE30229](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE30229)
+- [GSE19711](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE19711)
+
+
+
+# The hypothesis
+
