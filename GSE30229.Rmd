@@ -5,10 +5,16 @@ output: html_document
 
 # Authors
 
-- List
-- The 
-- Authors
-- Here
+*Edgaras Legus  
+*Vitalija Misiukonytė  
+*Brigita Ižganaitytė  
+*Gabrielė Dilytė  
+*Dalia Masilionytė   
+*Reda Vaisėtaitė  
+*Paulius Matijošaitis    
+*Dovilė Patiejūnaitė   
+
+
 
 # Analysis
 
