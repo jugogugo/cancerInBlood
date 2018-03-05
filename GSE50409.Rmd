@@ -5,10 +5,12 @@ output: html_document
 
 # Authors
 
-- List
-- The 
-- Authors
-- Here
+- Leonas Rėčkus
+- Liza Tofan
+- Aurimas Vilys
+- Karolina Butrimaitė
+- Ignas Labalaukis
+- Domas Motiejūnas
 
 # Analysis
 
