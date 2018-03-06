@@ -7,5 +7,7 @@ output: html_document
 
 - Tautminas Cibulskis
 
+- Gabrielius Erignis
+
 # Analysis
 
