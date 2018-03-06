@@ -5,9 +5,16 @@ output: html_document
 
 # Authors
 
+
+- Rimvydas Noreika
+
 - Tautminas Cibulskis
 
 - Gabrielius Erignis
 
+
 # Analysis
 
+```R
+lenght(names(GSMList(gset)))
+```
