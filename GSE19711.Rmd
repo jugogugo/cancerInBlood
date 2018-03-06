@@ -14,7 +14,51 @@ output: html_document
 
 
 # Analysis
-
-```R
-lenght(names(GSMList(gset)))
+ ```{r}
+ library(GEOquery)
+ ```
+- Automatically download the data from GEO
+```{r}
+gset = getGEO("GSE19711", GSEMatrix=FALSE, getGPL=FALSE)
 ```
+- Obtain the matrix of beta values where each row corresponds to probes and each column corresponds to samples
+```{r}
+gsmplatforms = lapply(GSMList(gset),function(x) {Meta(x)$platform_id})
+gsmlist = Filter(function(gsm) {Meta(gsm)$platform_id=='GPL8490'},GSMList(gset))
+probesets = Table(GPLList(gset)[[1]])$ID
+data.matrix <- do.call('cbind',
+                lapply(
+                       gsmlist,function(x) 
+                        {
+                         tab <- Table(x)
+                         mymatch <- match(probesets,tab$ID_REF)
+                         return(tab$VALUE[mymatch])
+                        }
+                       )
+                      )
+data.matrix <- apply(data.matrix,2,function(x) {as.numeric(as.character(x))})
+data.matrix[1:5,]
+```
+- How many samples and how many probes do you have in the data?
+```{r}
+samples = names(GSMList(gset))
+lenght(samples)
+[1] 540
+probesets = Table(GSMList(gset)[[1]])$ID
+lenght(probesets)
+[1] 27578
+```
+- How are the beta values distributed?
+ ```{r}
+ betaVals = Table(GSMList(gset)[[1]])$VALUE
+ plot(betaVals)
+ ```
+- Do your probes have names?
+```{r}
+probs = Table(GSMList(gset)[[1]])$ID
+probs[1:5]
+# Taip
+```
+- Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
+
+- Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
