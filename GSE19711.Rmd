@@ -5,6 +5,8 @@ output: html_document
 
 # Authors
 
+- Tautminas Cibulskis
+
 - Gabrielius Erignis
 
 # Analysis
