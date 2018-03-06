@@ -5,10 +5,7 @@ output: html_document
 
 # Authors
 
-- List
-- The 
-- Authors
-- Here
+- Gabrielius Erignis
 
 # Analysis
 
