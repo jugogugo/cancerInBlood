@@ -5,10 +5,7 @@ output: html_document
 
 # Authors
 
-- List
-- The 
-- Authors
-- Here
+Tautminas Cibulskis
 
 # Analysis
 
