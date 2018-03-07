@@ -106,4 +106,6 @@ hist(pvals, breaks = 1000)
 system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))
 ```
 - What is multiple hypothesis testing?
-- Using and manipulating statistical methods it is more likely to get “significant” data. Due to that, Type 1 Error can occur more often , when we reject correct null hypothesis.
+```{r}
+# Using and manipulating statistical methods it is more likely to get “significant” data. Due to that, Type 1 Error can occur more often , when we reject correct null hypothesis.
+```
