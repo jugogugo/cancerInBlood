@@ -9,3 +9,58 @@ output: html_document
 
 # Analysis
 
+ ```{r, echo=FALSE, include=FALSE}
+library(GEOquery)
+ ```
+- Automatically download the data from GEO
+```{r}
+gset = getGEO("GSE19711", destdir="./")
+```
+- Obtain the matrix of beta values where each row corresponds to probes and each column corresponds to samples
+```{r}
+gsetexpr = exprs(gset[[1]])
+rownames(gsetexpr)[1:5]
+colnames(gsetexpr)[1:5]
+```
+- How many samples and how many probes do you have in the data?
+```{r}
+sampleset = colnames(gsetexpr)
+length(samples)
+
+probeset = rownames(gsetexpr)
+length(probeset)
+```
+- How are the beta values distributed?
+ ```{r}
+ hist(gsetexpr)
+ ```
+- Do your probes have names?
+```{r}
+probeset[1:5]
+```
+- Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
+```{r}
+annotation = getGEO("GPL8490", destdir = "./")
+annotation = Table(annotation)
+head(annotation)
+```
+- Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
+```{r}
+disease = pData(phenoData(gset[[1]]))
+disease[1:20,1]
+```
+For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
+```{r}
+pvalarray = array()
+for (i in 1:length(probenames)){
+  case = gsetexp[i, grep("Case", disease$`sample type:ch1`)]
+  control = gsetexp[i, grep("Control", disease$`sample type:ch1`)]
+  tt = t.test(case, control)
+  pvalarray[i] = tt$p.value
+} 
+```
+
+Plot the distribution of p values. What is the expected distribution? How does it differ from what you get?
+```{r}
+hist(pvalarray, breaks = 100)
+```
