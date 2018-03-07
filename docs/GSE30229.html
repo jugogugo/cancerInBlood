@@ -20,8 +20,8 @@
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<link href="site_libs/highlightjs-1.1/default.css" rel="stylesheet" />
-<script src="site_libs/highlightjs-1.1/highlight.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css">
@@ -30,10 +30,12 @@
   }
 </style>
 <script type="text/javascript">
-if (window.hljs && document.readyState && document.readyState === "complete") {
-   window.setTimeout(function() {
-      hljs.initHighlighting();
-   }, 0);
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
 }
 </script>
 
@@ -200,6 +202,7 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">GSE30229</h1>
+<h4 class="date"><em>2018 m. kovas</em></h4>
 
 </div>
 
@@ -207,14 +210,197 @@ $(document).ready(function () {
 <div id="authors" class="section level1">
 <h1>Authors</h1>
 <ul>
-<li>List</li>
-<li>The</li>
-<li>Authors</li>
-<li>Here</li>
+<li>Edgaras Legus</li>
+<li>Vitalija Misiukonytė</li>
+<li>Brigita Ižganaitytė</li>
+<li>Gabrielė Dilytė</li>
+<li>Dalia Masilionytė</li>
+<li>Reda Vaisėtaitė</li>
+<li>Paulius Matijošaitis</li>
+<li>Dovilė Patiejūnaitė</li>
 </ul>
 </div>
 <div id="analysis" class="section level1">
 <h1>Analysis</h1>
+<p>Downloading the data using GEO</p>
+<pre class="r"><code>library(GEOquery)</code></pre>
+<pre><code>## Warning: package &#39;GEOquery&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: Biobase</code></pre>
+<pre><code>## Warning: package &#39;Biobase&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: BiocGenerics</code></pre>
+<pre><code>## Warning: package &#39;BiocGenerics&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: parallel</code></pre>
+<pre><code>## 
+## Attaching package: &#39;BiocGenerics&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:parallel&#39;:
+## 
+##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
+##     clusterExport, clusterMap, parApply, parCapply, parLapply,
+##     parLapplyLB, parRapply, parSapply, parSapplyLB</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     IQR, mad, sd, var, xtabs</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     Filter, Find, Map, Position, Reduce, anyDuplicated, append,
+##     as.data.frame, cbind, colMeans, colSums, colnames, do.call,
+##     duplicated, eval, evalq, get, grep, grepl, intersect,
+##     is.unsorted, lapply, lengths, mapply, match, mget, order,
+##     paste, pmax, pmax.int, pmin, pmin.int, rank, rbind, rowMeans,
+##     rowSums, rownames, sapply, setdiff, sort, table, tapply,
+##     union, unique, unsplit, which, which.max, which.min</code></pre>
+<pre><code>## Welcome to Bioconductor
+## 
+##     Vignettes contain introductory material; view with
+##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
+##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.</code></pre>
+<pre><code>## Setting options(&#39;download.file.method.GEOquery&#39;=&#39;auto&#39;)</code></pre>
+<pre><code>## Setting options(&#39;GEOquery.inmemory.gpl&#39;=FALSE)</code></pre>
+<pre class="r"><code>GSE30229 &lt;- getGEO(&quot;GSE30229&quot;, destdir = &quot;./&quot;)</code></pre>
+<pre><code>## Found 1 file(s)</code></pre>
+<pre><code>## GSE30229_series_matrix.txt.gz</code></pre>
+<pre><code>## Using locally cached version: .//GSE30229_series_matrix.txt.gz</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_double(),
+##   ID_REF = col_character()
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<pre><code>## Using locally cached version of GPL8490 found here:
+## .//GPL8490.soft</code></pre>
+<p>Obtaining the matrix of beta values where each row corresponds to probes (names) and each column corresponds to samples</p>
+<pre class="r"><code>matrix &lt;- exprs(GSE30229[[1]])
+head(rownames(matrix))</code></pre>
+<pre><code>## [1] &quot;cg00000292&quot; &quot;cg00002426&quot; &quot;cg00003994&quot; &quot;cg00005847&quot; &quot;cg00006414&quot;
+## [6] &quot;cg00007981&quot;</code></pre>
+<pre class="r"><code>head(colnames(matrix))</code></pre>
+<pre><code>## [1] &quot;GSM748577&quot; &quot;GSM748578&quot; &quot;GSM748579&quot; &quot;GSM748580&quot; &quot;GSM748581&quot; &quot;GSM748582&quot;</code></pre>
+<p>Counting samples and probes in our data</p>
+<pre class="r"><code>samples &lt;- colnames(matrix)
+probes &lt;- rownames(matrix)
+length(samples)</code></pre>
+<pre><code>## [1] 184</code></pre>
+<pre class="r"><code>length(probes)</code></pre>
+<pre><code>## [1] 27578</code></pre>
+<p>Distribution of beta values</p>
+<pre class="r"><code>hist(matrix, breaks=1000, xlab = &quot;Beta Value &quot;, border = &quot;green&quot;, main = &quot;Beta value distribution&quot;)</code></pre>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Names of probes</p>
+<pre class="r"><code>head(rownames(matrix))</code></pre>
+<pre><code>## [1] &quot;cg00000292&quot; &quot;cg00002426&quot; &quot;cg00003994&quot; &quot;cg00005847&quot; &quot;cg00006414&quot;
+## [6] &quot;cg00007981&quot;</code></pre>
+<p>Annotation that tells the coordinate (in hg19) of each probe and its genomic features</p>
+<pre class="r"><code>annotate &lt;- getGEO(&quot;GPL8490&quot;, destdir = &quot;./&quot;)</code></pre>
+<pre><code>## Using locally cached version of GPL8490 found here:
+## .//GPL8490.soft</code></pre>
+<pre class="r"><code>annotate &lt;- Table(annotate)
+
+annotated_probes &lt;- intersect(annotate$ID, rownames(matrix))
+cat(&quot;Probes number: &quot;, length(annotated_probes), &quot;\n&quot;)</code></pre>
+<pre><code>## Probes number:  27578</code></pre>
+<pre class="r"><code>i &lt;- match(annotated_probes, annotate$ID)
+annotate &lt;- annotate[i, ]
+
+i &lt;- match(annotated_probes, rownames(matrix))
+matrix &lt;- matrix[i,]
+stopifnot(all(rownames(matrix) == annotate$ID))
+
+head(annotate)</code></pre>
+<pre><code>##           ID       Name IlmnStrand AddressA_ID
+## 1 cg00000292 cg00000292        TOP      990370
+## 2 cg00002426 cg00002426        TOP     6580397
+## 3 cg00003994 cg00003994        TOP     7150184
+## 4 cg00005847 cg00005847        BOT     4850717
+## 5 cg00006414 cg00006414        BOT     6980731
+## 6 cg00007981 cg00007981        TOP     5260689
+##                                     AlleleA_ProbeSeq AddressB_ID
+## 1 AAACATTAATTACCAACCACTCTTCCAAAAAACACTTACCATTAAAACCA     6660678
+## 2 AATATAATAACATTACCTTACCCATCTTATAATCAAACCAAACAAAAACA     6100343
+## 3 AATAATAATAATACCCCCTATAATACTAACTAACAAACATACCCTCTTCA     7150392
+## 4 TACTATAATACACCCTATATTTAAAACACTAAACTTACCCCATTAAAACA     1260113
+## 5 CTCAAAAACCAAACAAAACAAAACCCCAATACTAATCATTAATAAAATCA     4280093
+## 6 CCAAATTCAAAAAACTACAACTAAAACTAACTATAAACAAAATAATCACA     6860356
+##                                     AlleleB_ProbeSeq GenomeBuild Chr
+## 1 AAACATTAATTACCAACCGCTCTTCCAAAAAACACTTACCATTAAAACCG          36  16
+## 2 AATATAATAACATTACCTTACCCGTCTTATAATCAAACCAAACGAAAACG          36   3
+## 3 AATAATAATAATACCCCCTATAATACTAACTAACAAACATACCCTCTTCG          36   7
+## 4 TACTATAATACACCCTATATTTAAAACACTAAACTTACCCCATTAAAACG          36   2
+## 5 CTCGAAAACCGAACAAAACAAAACCCCAATACTAATCGTTAATAAAATCG          36   7
+## 6 CCAAATTCAAAAAACTACGACTAAAACTAACTATAAACAAAATAATCACG          36  11
+##     MapInfo  Ploidy      Species      Source SourceVersion SourceStrand
+## 1  28797601 diploid Homo sapiens NCBI:RefSeq          36.1          TOP
+## 2  57718583 diploid Homo sapiens NCBI:RefSeq          36.1          TOP
+## 3  15692387 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
+## 4 176737319 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
+## 5 148453770 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
+## 6  93502242 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
+##                                            SourceSeq
+## 1 CGGCCTCAATGGTAAGTGTCCCTTGGAAGAGCGGCTGGTAATTAATGCCC
+## 2 CGCTCTCGTCTGGTTTGATCACAAGACGGGCAAGGTAATGTCACCACATT
+## 3 GGTGGTGGTGGTGCCCCCTGTGATGCTGGCTGGCAAACATGCCCTCTTCG
+## 4 TACTGTAATGCACCCTGTATTTAAGGCACTGGGCTTGCCCCATTAAAGCG
+## 5 CTCGGAAACCGAGCAGGGCAAAACCCCAGTGCTGATCGTTAGTGGGATCG
+## 6 CCAAGTTCAAGGGGCTGCGACTGGAGCTGGCTGTGGACAAGATGGTCACG
+##                                                                                                                  TopGenomicSeq
+## 1 TGGGGTGAGTGAGACCACGGGCCTCACCCCGGACCAAGTTAAGCGGAATCTGGAGAAATA[CG]GCCTCAATGGTAAGTGTCCCTTGGAAGAGCGGCTGGTAATTAATGCCCTCCTGCACCCCC
+## 2 CCGCTGTCGACCAGCGCAGAATAATGCCACTTTTGATTGCAAAGTGCTATCAAGGAACCA[CG]CTCTCGTCTGGTTTGATCACAAGACGGGCAAGGTAATGTCACCACATTGTCCAGCGGCAT
+## 3 GGTGGTGGTGGTGGTGGTGGTGGTGCCCCCTGTGATGCTGGCTGGCAAACATGCCCTCTT[CG]TTGGGGTATCCCGCGATTATGCAAGATGAGGAAGAAGTAGAGAGCTCGGGGTAAGACATA
+## 4 CAGATAACTCAATACTGTAATGCACCCTGTATTTAAGGCACTGGGCTTGCCCCATTAAAG[CG]CCATAAATTTGAAGGCCAATGATCGGTTTTCATGTAACGGGTGGTACTTCATACTGAAGT
+## 5 GAACCGGCCCAGCTCGGAAACCGAGCAGGGCAAAACCCCAGTGCTGATCGTTAGTGGGAT[CG]CGCCTGTGAATAGCCACTGCCCTCCAGCCTGGGCAACAGCCAGACCCCGTCTGTTTAATA
+## 6 AGCCCACGGAGCCCAAGTTCAAGGGGCTGCGACTGGAGCTGGCTGTGGACAAGATGGTCA[CG]TGCATTGCGGTGGGGCTGCCCCTGCTGCTCATCTCGCTGGCCTTCGCGCAGGAGATCTCG
+##   Next_Base Color_Channel TSS_Coordinate Gene_Strand      Gene_ID Symbol
+## 1         T           Red       28797310           +   GeneID:487 ATP2A1
+## 2         T           Red       57718214           +  GeneID:7871  SLMAP
+## 3         T           Red       15692819           -  GeneID:4223  MEOX2
+## 4         C           Grn      176737051           +  GeneID:3232  HOXD3
+## 5         C           Grn      148454441           + GeneID:57541 ZNF398
+## 6         T           Red       93501742           + GeneID:24145  PANX1
+##                                  Synonym   Accession         GID
+## 1                         ATP2A; SERCA1; NM_173201.2 GI:47132613
+## 2                        SLAP; KIAA1601; NM_007159.2 GI:56550042
+## 3                             GAX; MOX2; NM_005924.3 GI:55956906
+## 4 HOX4; HOX1D; HOX4A; Hox-4.1; MGC10470; NM_006898.4 GI:23510372
+## 5              P51; P71; ZER6; KIAA1339; NM_020781.2 GI:25777702
+## 6               MRS1; UNQ2529; MGC21309; NM_015368.3 GI:39995063
+##                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         Annotation
+## 1 isoform a is encoded by transcript variant a; sarcoplasmic/endoplasmic reticulum calcium ATPase 1; calcium pump 1; SR Ca(2+)-ATPase 1; calcium-transporting ATPase sarcoplasmic reticulum type; fast twitch skeletal muscle isoform; endoplasmic reticulum class 1/2 Ca(2+) ATPase; go_component: membrane; go_component: integral to membrane; go_component: sarcoplasmic reticulum; go_component: smooth endoplasmic reticulum; go_function: ATP binding; go_function: hydrolase activity; go_function: nucleotide binding; go_function: calcium ion binding; go_function: magnesium ion binding; go_function: calcium-transporting ATPase activity; go_function: hydrolase activity; acting on acid anhydrides; catalyzing transmembrane movement of substances; go_process: metabolism; go_process: cation transport; go_process: proton transport; go_process: calcium ion transport; go_process: regulation of striated muscle contraction
+## 2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        Sarcolemmal-associated protein; go_component: integral to plasma membrane; go_component: smooth endoplasmic reticulum; go_function: unfolded protein binding; go_process: protein folding; go_process: muscle contraction
+## 3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    growth arrest-specific homeo box; go_component: nucleus; go_function: transcription factor activity; go_process: circulation; go_process: development; go_process: regulation of transcription; DNA-dependent
+## 4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          homeobox protein Hox-D3; Hox-4.1; mouse; homolog of; homeo box D3; go_component: nucleus; go_function: transcription factor activity; go_process: morphogenesis; go_process: regulation of transcription; DNA-dependent
+## 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              isoform b is encoded by transcript variant 2; zinc finger DNA binding protein ZER6; zinc finger-estrogen receptor interaction; clone 6; zinc finger DNA binding protein p52/p71; go_component: nucleus; go_function: DNA binding; go_function: zinc ion binding; go_function: metal ion binding; go_function: transcriptional activator activity; go_process: transcription; go_process: regulation of transcription; DNA-dependent
+## 6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  innexin; go_component: membrane; go_component: gap junction; go_component: integral to membrane
+##                                              Product Distance_to_TSS
+## 1 ATPase; Ca++ transporting; fast twitch 1 isoform a             291
+## 2                      sarcolemma associated protein             369
+## 3                             mesenchyme homeo box 2             432
+## 4                                        homeobox D3             268
+## 5                          zinc finger 398 isoform b             671
+## 6                                         pannexin 1             500
+##   CPG_ISLAND  CPG_ISLAND_LOCATIONS MIR_CPG_ISLAND     RANGE_GB RANGE_START
+## 1       TRUE  16:28797486-28797825                 NC_000016.8    28797486
+## 2       TRUE   3:57716811-57718675                NC_000003.10    57716811
+## 3       TRUE   7:15691512-15693551                NC_000007.12    15691512
+## 4      FALSE                                                            NA
+## 5       TRUE 7:148453584-148455804                NC_000007.12   148453584
+## 6       TRUE  11:93501124-93502564                 NC_000011.8    93501124
+##   RANGE_END RANGE_STRAND      GB_ACC   ORF
+## 1  28797825            + NM_173201.2   487
+## 2  57718675            + NM_007159.2  7871
+## 3  15693551            - NM_005924.3  4223
+## 4        NA              NM_006898.4  3232
+## 5 148455804            + NM_020781.2 57541
+## 6  93502564            + NM_015368.3 24145</code></pre>
+<p>Samples which correspond to healthy individuals, and which samples correspond to the sick ones</p>
+<pre class="r"><code>sickness &lt;- pData(phenoData(GSE30229[[1]]))
+sickness[1:20,1]</code></pre>
+<pre><code>##  [1] HNSCC case PBL 1  HNSCC case PBL 2  HNSCC case PBL 3 
+##  [4] control PBL 4     control PBL 5     control PBL 6    
+##  [7] control PBL 7     HNSCC case PBL 8  HNSCC case PBL 9 
+## [10] control PBL 10    control PBL 11    HNSCC case PBL 12
+## [13] HNSCC case PBL 13 HNSCC case PBL 14 control PBL 15   
+## [16] control PBL 16    HNSCC case PBL 17 control PBL 18   
+## [19] control PBL 19    HNSCC case PBL 20
+## 184 Levels: HNSCC case PBL 1 HNSCC case PBL 100 ... control PBL 97</code></pre>
 </div>
 
 
