@@ -92,10 +92,13 @@ for (i in 1:length(rownames(betaValueMatrix))) {
 Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
 
 ```{r, include=TRUE, echo=TRUE}
-hist(pvalues, border = "green")
+#The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values.
+#The “depth” of the histogram on the right side shows the values that are null.
+hist(pvalues, col = "green", breaks = 100)
 ```
 
 Performance-wise, how long will it take to compute the test for all probes?
 ```{r, include=TRUE, echo=TRUE}
 # We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests
 ```
+
