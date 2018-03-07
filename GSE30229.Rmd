@@ -20,30 +20,30 @@ library(GEOquery)
 GSE30229 <- getGEO("GSE30229", destdir = "./")
 ```
 
-Obtaining the matrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
+Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
 
 ```{r, include=TRUE, echo=TRUE}
-matrix <- exprs(GSE30229[[1]])
-head(rownames(matrix))
-head(colnames(matrix))
+betaValueMatrix <- exprs(GSE30229[[1]])
+head(rownames(betaValueMatrix))
+head(colnames(betaValueMatrix))
 ```
 
 Counting samples and probes in our data
 ```{r, include=TRUE, echo=TRUE}
-samples <- colnames(matrix)
-probes <- rownames(matrix)
+samples <- colnames(betaValueMatrix)
+probes <- rownames(betaValueMatrix)
 length(samples)
 length(probes)
 ```
 
 Distribution of beta values
 ```{r, include=TRUE, echo=TRUE}
-hist(matrix, breaks=1000, xlab = "Beta Value ", border = "green", main = "Beta value distribution")
+hist(betaValueMatrix, breaks=1000, xlab = "Beta Value ", border = "green", main = "Beta value distribution")
 ```
 
 Names of probes
 ```{r, include=TRUE, echo=TRUE}
-head(rownames(matrix))
+head(rownames(betaValueMatrix))
 ```
 
 Annotation that tells the coordinate (in hg19) of each probe and its genomic features
@@ -51,15 +51,15 @@ Annotation that tells the coordinate (in hg19) of each probe and its genomic fea
 annotate <- getGEO("GPL8490", destdir = "./")
 annotate <- Table(annotate)
 
-annotated_probes <- intersect(annotate$ID, rownames(matrix))
+annotated_probes <- intersect(annotate$ID, rownames(betaValueMatrix))
 cat("Probes number: ", length(annotated_probes), "\n")
 
 i <- match(annotated_probes, annotate$ID)
 annotate <- annotate[i, ]
 
-i <- match(annotated_probes, rownames(matrix))
-matrix <- matrix[i,]
-stopifnot(all(rownames(matrix) == annotate$ID))
+i <- match(annotated_probes, rownames(betaValueMatrix))
+betaValueMatrix <- betaValueMatrix[i,]
+stopifnot(all(rownames(betaValueMatrix) == annotate$ID))
 
 head(annotate)
 ```
@@ -68,4 +68,31 @@ Samples which correspond to healthy individuals, and which samples correspond to
 ```{r, include=TRUE, echo=TRUE}
 sickness <- pData(phenoData(GSE30229[[1]]))
 sickness[1:20,1]
+```
+
+For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+
+```{r, include=TRUE, echo=TRUE}
+controlSamples <- which(sickness$`disease:ch1` == 'control')
+caseSamples <- which(sickness$`disease:ch1` == 'HNSCC case')
+t.test(betaValueMatrix[1,controlSamples], betaValueMatrix[1,caseSamples])
+```
+
+From the t-test, obtain the p value.
+```{r, include=TRUE, echo=TRUE}
+pvalues = c()
+for (i in 1:length(rownames(betaValueMatrix))) {
+     pvalues[i] <- t.test(betaValueMatrix[i,controlSamples], betaValueMatrix[i,caseSamples])$p.value
+     
+}
+```
+Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+
+```{r, include=TRUE, echo=TRUE}
+hist(pvalues, border = "green")
+```
+
+Performance-wise, how long will it take to compute the test for all probes?
+```{r, include=TRUE, echo=TRUE}
+# We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests
 ```
