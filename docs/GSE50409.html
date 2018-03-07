@@ -374,6 +374,39 @@ disease[1:20,1]</code></pre>
 ## [17] 4763072021_H: Control             4763072021_I: Bladder cancer case
 ## [19] 4763072021_J: Control             4763072021_K: Control            
 ## 428 Levels: 4763072011_A: Bladder cancer case ... 4953087046_L: Bladder cancer case</code></pre>
+<ul>
+<li>For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.</li>
+</ul>
+<pre class="r"><code>sick &lt;- which(disease$source_name_ch1 == &quot;Bladder cancer case&quot;)
+control &lt;- which(disease$source_name_ch1 != &quot;Bladder cancer case&quot;)
+t.test(matrix[1,control], matrix[1,sick])</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  matrix[1, control] and matrix[1, sick]
+## t = -2.3922, df = 424.64, p-value = 0.01718
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.033361664 -0.003266461
+## sample estimates:
+## mean of x mean of y 
+## 0.7869156 0.8052296</code></pre>
+<ul>
+<li>From the t-test, obtain the p value.</li>
+</ul>
+<pre class="r"><code>pvals &lt;- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})</code></pre>
+<ul>
+<li>Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?</li>
+</ul>
+<pre class="r"><code>hist(pvals, breaks = 1000)</code></pre>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-11-1.png" width="100%" /></p>
+<pre class="r"><code>#The p-value graph should be distributed around zero. What we got appears to be the expected result, because in the graph it is clear that frequency of probes with p-value zero or very close to it is the highest, while the frequency of probes with bigger p-value plummets extremely.</code></pre>
+<ul>
+<li>Performance-wise, how long will it take to compute the test for all probes?</li>
+</ul>
+<pre class="r"><code>system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))</code></pre>
+<pre><code>##    user  system elapsed 
+##   4.943   0.150   5.123</code></pre>
 </div>
 
 
