@@ -66,6 +66,18 @@ for (i in 1:length(probenames)){
 ```
 
 Plot the distribution of p values. What is the expected distribution? How does it differ from what you get?
+We get Anti-conservative p-values. All null p-values form a flat distribution. Peak is close to 0 - that is where the alternative hypotheses are. Not all p-values less than .05 are significant. High p-values indicate false negatives - hypotheses that are not detectable with our test. The left of the histogram shows significance. The right side shows how many p-values are null.
 ```{r}
 hist(pvalarray, breaks = 100)
 ```
+Performance-wise, how long will it take to compute the test for all probes?
+Result is 51.228 seconds.
+```{r}
+system.time( for (i in 1:length(probenames)){
+  case = gsetexp[i, grep("Case", disease$`sample type:ch1`)]
+  control = gsetexp[i, grep("Control", disease$`sample type:ch1`)]
+  tt = t.test(case, control)
+  pvalarray[i] = tt$p.value
+})
+```
+
