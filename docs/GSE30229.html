@@ -225,40 +225,8 @@ $(document).ready(function () {
 <div id="step-2" class="section level2">
 <h2>Step 2</h2>
 <p>Downloading the data using GEO</p>
-<pre class="r"><code>library(GEOquery)</code></pre>
-<pre><code>## Warning: package &#39;GEOquery&#39; was built under R version 3.4.3</code></pre>
-<pre><code>## Loading required package: Biobase</code></pre>
-<pre><code>## Warning: package &#39;Biobase&#39; was built under R version 3.4.2</code></pre>
-<pre><code>## Loading required package: BiocGenerics</code></pre>
-<pre><code>## Warning: package &#39;BiocGenerics&#39; was built under R version 3.4.2</code></pre>
-<pre><code>## Loading required package: parallel</code></pre>
-<pre><code>## 
-## Attaching package: &#39;BiocGenerics&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:parallel&#39;:
-## 
-##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-##     clusterExport, clusterMap, parApply, parCapply, parLapply,
-##     parLapplyLB, parRapply, parSapply, parSapplyLB</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     IQR, mad, sd, var, xtabs</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     Filter, Find, Map, Position, Reduce, anyDuplicated, append,
-##     as.data.frame, cbind, colMeans, colSums, colnames, do.call,
-##     duplicated, eval, evalq, get, grep, grepl, intersect,
-##     is.unsorted, lapply, lengths, mapply, match, mget, order,
-##     paste, pmax, pmax.int, pmin, pmin.int, rank, rbind, rowMeans,
-##     rowSums, rownames, sapply, setdiff, sort, table, tapply,
-##     union, unique, unsplit, which, which.max, which.min</code></pre>
-<pre><code>## Welcome to Bioconductor
-## 
-##     Vignettes contain introductory material; view with
-##     &#39;browseVignettes()&#39;. To cite Bioconductor, see
-##     &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.</code></pre>
-<pre><code>## Setting options(&#39;download.file.method.GEOquery&#39;=&#39;auto&#39;)</code></pre>
-<pre><code>## Setting options(&#39;GEOquery.inmemory.gpl&#39;=FALSE)</code></pre>
-<pre class="r"><code>GSE30229 &lt;- getGEO(&quot;GSE30229&quot;, destdir = &quot;./&quot;)</code></pre>
+<pre class="r"><code>library(GEOquery)
+GSE30229 &lt;- getGEO(&quot;GSE30229&quot;, destdir = &quot;./&quot;)</code></pre>
 <pre><code>## Found 1 file(s)</code></pre>
 <pre><code>## GSE30229_series_matrix.txt.gz</code></pre>
 <pre><code>## Using locally cached version: .//GSE30229_series_matrix.txt.gz</code></pre>
