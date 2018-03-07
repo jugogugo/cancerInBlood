@@ -222,6 +222,8 @@ $(document).ready(function () {
 </div>
 <div id="analysis" class="section level1">
 <h1>Analysis</h1>
+<div id="step-2" class="section level2">
+<h2>Step 2</h2>
 <p>Downloading the data using GEO</p>
 <pre class="r"><code>library(GEOquery)</code></pre>
 <pre><code>## Warning: package &#39;GEOquery&#39; was built under R version 3.4.3</code></pre>
@@ -268,25 +270,25 @@ $(document).ready(function () {
 <pre><code>## See spec(...) for full column specifications.</code></pre>
 <pre><code>## Using locally cached version of GPL8490 found here:
 ## .//GPL8490.soft</code></pre>
-<p>Obtaining the matrix of beta values where each row corresponds to probes (names) and each column corresponds to samples</p>
-<pre class="r"><code>matrix &lt;- exprs(GSE30229[[1]])
-head(rownames(matrix))</code></pre>
+<p>Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples</p>
+<pre class="r"><code>betaValueMatrix &lt;- exprs(GSE30229[[1]])
+head(rownames(betaValueMatrix))</code></pre>
 <pre><code>## [1] &quot;cg00000292&quot; &quot;cg00002426&quot; &quot;cg00003994&quot; &quot;cg00005847&quot; &quot;cg00006414&quot;
 ## [6] &quot;cg00007981&quot;</code></pre>
-<pre class="r"><code>head(colnames(matrix))</code></pre>
+<pre class="r"><code>head(colnames(betaValueMatrix))</code></pre>
 <pre><code>## [1] &quot;GSM748577&quot; &quot;GSM748578&quot; &quot;GSM748579&quot; &quot;GSM748580&quot; &quot;GSM748581&quot; &quot;GSM748582&quot;</code></pre>
 <p>Counting samples and probes in our data</p>
-<pre class="r"><code>samples &lt;- colnames(matrix)
-probes &lt;- rownames(matrix)
+<pre class="r"><code>samples &lt;- colnames(betaValueMatrix)
+probes &lt;- rownames(betaValueMatrix)
 length(samples)</code></pre>
 <pre><code>## [1] 184</code></pre>
 <pre class="r"><code>length(probes)</code></pre>
 <pre><code>## [1] 27578</code></pre>
 <p>Distribution of beta values</p>
-<pre class="r"><code>hist(matrix, breaks=1000, xlab = &quot;Beta Value &quot;, border = &quot;green&quot;, main = &quot;Beta value distribution&quot;)</code></pre>
+<pre class="r"><code>hist(betaValueMatrix, breaks=1000, xlab = &quot;Beta Value &quot;, border = &quot;green&quot;, main = &quot;Beta value distribution&quot;)</code></pre>
 <p><img src="GSE30229_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <p>Names of probes</p>
-<pre class="r"><code>head(rownames(matrix))</code></pre>
+<pre class="r"><code>head(rownames(betaValueMatrix))</code></pre>
 <pre><code>## [1] &quot;cg00000292&quot; &quot;cg00002426&quot; &quot;cg00003994&quot; &quot;cg00005847&quot; &quot;cg00006414&quot;
 ## [6] &quot;cg00007981&quot;</code></pre>
 <p>Annotation that tells the coordinate (in hg19) of each probe and its genomic features</p>
@@ -295,15 +297,15 @@ length(samples)</code></pre>
 ## .//GPL8490.soft</code></pre>
 <pre class="r"><code>annotate &lt;- Table(annotate)
 
-annotated_probes &lt;- intersect(annotate$ID, rownames(matrix))
+annotated_probes &lt;- intersect(annotate$ID, rownames(betaValueMatrix))
 cat(&quot;Probes number: &quot;, length(annotated_probes), &quot;\n&quot;)</code></pre>
 <pre><code>## Probes number:  27578</code></pre>
 <pre class="r"><code>i &lt;- match(annotated_probes, annotate$ID)
 annotate &lt;- annotate[i, ]
 
-i &lt;- match(annotated_probes, rownames(matrix))
-matrix &lt;- matrix[i,]
-stopifnot(all(rownames(matrix) == annotate$ID))
+i &lt;- match(annotated_probes, rownames(betaValueMatrix))
+betaValueMatrix &lt;- betaValueMatrix[i,]
+stopifnot(all(rownames(betaValueMatrix) == annotate$ID))
 
 head(annotate)</code></pre>
 <pre><code>##           ID       Name IlmnStrand AddressA_ID
@@ -401,6 +403,52 @@ sickness[1:20,1]</code></pre>
 ## [16] control PBL 16    HNSCC case PBL 17 control PBL 18   
 ## [19] control PBL 19    HNSCC case PBL 20
 ## 184 Levels: HNSCC case PBL 1 HNSCC case PBL 100 ... control PBL 97</code></pre>
+</div>
+<div id="step-3" class="section level2">
+<h2>Step 3</h2>
+<p>For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.</p>
+<pre class="r"><code>controlSamples &lt;- which(sickness$`disease:ch1` == &#39;control&#39;)
+caseSamples &lt;- which(sickness$`disease:ch1` == &#39;HNSCC case&#39;)
+t.test(betaValueMatrix[1,controlSamples], betaValueMatrix[1,caseSamples])</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  betaValueMatrix[1, controlSamples] and betaValueMatrix[1, caseSamples]
+## t = 1.4715, df = 173.5, p-value = 0.143
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -0.003265838  0.022401760
+## sample estimates:
+## mean of x mean of y 
+## 0.7852802 0.7757123</code></pre>
+<p>From the t-test, obtain the p value.</p>
+<pre class="r"><code>pvalues = c()
+for (i in 1:length(rownames(betaValueMatrix))) {
+     pvalues[i] &lt;- t.test(betaValueMatrix[i,controlSamples], betaValueMatrix[i,caseSamples])$p.value
+     
+}</code></pre>
+<p>Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?</p>
+<pre class="r"><code>#The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values.
+#The “depth” of the histogram on the right side shows the values that are null.
+hist(pvalues, col = &quot;green&quot;, breaks = 100)</code></pre>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Performance-wise, how long will it take to compute the test for all probes?</p>
+<pre class="r"><code># We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests</code></pre>
+</div>
+<div id="step-4" class="section level2">
+<h2>Step 4</h2>
+<p>What is multiple hypothesis testing?</p>
+<pre class="r"><code>#Kitaip jie dar gali būti vadinami “p-hacking”. Tai statistinių metodų naudojimas tam, kad išgauti geresnius, reikšmingesnius rezultatus. 
+#Yra eksperimentų, kurių duomenyse yra didelis kintamųjų skaičius. Tokie didelio našumo eksperimetai atliekami genetikoje ir image analysis. 
+
+#Į šį testavimo būdą įeina:
+#1) skirtumai tarp nulinės ir alternatyvios hipotezės
+#2) reikšmingumo lygiai
+#3) Type I and Type II errors
+#4)p-values
+
+#Atliekant multiple hypothesis testing mes tikriname individualiai kiekvieną nulinę hipotezę. Kad galėtume atmesti bent kelias nulines hipotezes. </code></pre>
+</div>
 </div>
 
 
