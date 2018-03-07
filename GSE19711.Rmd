@@ -9,6 +9,7 @@ output: html_document
 - Rimvydas Noreika
 - Tautminas Cibulskis
 - Gabrielius Erignis
+- Rolandas Porėjus
 
 
 # Analysis
