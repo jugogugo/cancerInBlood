@@ -1,20 +1,54 @@
 ---
-title: 'GSE30229'
+title: "GSE30229"
+authors:
+- name: Edgaras Legus
+- name: Vitalija Misiukonytė
+- name: Brigita Ižganaitytė
+- name: Gabrielė Dilytė
+- name: Dalia Masilionytė
+- name: Reda Vaisėtaitė
+- name: Paulius Matijošaitis
+- name: Dovilė Patiejūnaitė
+date: '2018 m. kovas 6 d.'
 output: html_document
 ---
+Downloading the data using GEO 
+```{r, include=TRUE, echo=TRUE}
+library(GEOquery)
+GSE30229 <- getGEO("GSE30229", GSEMatrix=FALSE)
+```
 
-# Authors
+Obtaining the matrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
 
-*Edgaras Legus  
-*Vitalija Misiukonytė  
-*Brigita Ižganaitytė  
-*Gabrielė Dilytė  
-*Dalia Masilionytė   
-*Reda Vaisėtaitė  
-*Paulius Matijošaitis    
-*Dovilė Patiejūnaitė   
+```{r, include=TRUE, echo=TRUE}
+probesets <- Table(GPLList(GSE30229)[[1]])$ID
+gsmplatforms <- lapply(GSMList(GSE30229),function(x) {Meta(x)$platform_id})
+gsmlist <- Filter(function(GSE30229) {Meta(GSE30229)$platform_id=='GPL8490'},GSMList(GSE30229))
+data.matrix <- do.call('cbind',lapply(gsmlist,function(x) 
+{tab <- Table(x)
+mymatch <- match(probesets,tab$ID_REF)
+return(tab$VALUE[mymatch])
+}))
+data.matrix <- apply(data.matrix,2,function(x) {as.numeric(as.character(x))})
+rownames(data.matrix) <- probesets
+colnames(data.matrix) <- names(gsmlist)
+data.matrix[1:5,]
+```
 
+Counting samples and probes in our data
+```{r, include=TRUE, echo=TRUE}
+samples <- names(GSMList(GSE30229))
+length(samples)
+length(probesets)
+```
+Distribution of beta values
+```{r, include=TRUE, echo=TRUE}
+gset <- getGEO("GSE30229", GSEMatrix =TRUE, getGPL=FALSE)
+if (length(gset) > 1) idx <- grep("GPL8490", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
 
-
-# Analysis
-
+dev.new(width=4+dim(gset)[[2]]/5, height=6)
+par(mar=c(2+round(max(nchar(sampleNames(gset)))/2),4,2,1))
+title <- paste ("GSE30229", '/', annotation(gset), " selected samples", sep ='')
+boxplot(exprs(gset), boxwex=0.7, notch=T, main=title, outline=FALSE, las=2)
+```
