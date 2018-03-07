@@ -34,6 +34,7 @@ length(samplesNames)
 - How are the beta values distributed?
 ```{r out.width = '100%'}
 boxplot(matrix, outline = FALSE, boxwex = 0.7, notch = T, las = 2, main = "GSE50409")
+hist(matrix, breaks=1000)
 ```
 - Do your probes have names?
 ```{r}
@@ -45,7 +46,8 @@ identical(t1, t2)
 ```
 - Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
 ```{r}
-gse50409
+pData(featureData(gse50409[[1]]))[1:20,c(10,8,22,23)]
+#No our genome version appears to be hm27 (HumanMethylation27)
 ```
 - Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
 ```{r}
