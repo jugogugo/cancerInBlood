@@ -102,3 +102,18 @@ Performance-wise, how long will it take to compute the test for all probes?
 # We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests
 ```
 
+## Step 4
+
+What is multiple hypothesis testing?
+```{r, include=TRUE, echo=TRUE}
+#Kitaip jie dar gali būti vadinami “p-hacking”. Tai statistinių metodų naudojimas tam, kad išgauti geresnius, reikšmingesnius rezultatus. 
+#Yra eksperimentų, kurių duomenyse yra didelis kintamųjų skaičius. Tokie didelio našumo eksperimetai atliekami genetikoje ir image analysis. 
+
+#Į šį testavimo būdą įeina:
+#1) skirtumai tarp nulinės ir alternatyvios hipotezės
+#2) reikšmingumo lygiai
+#3) Type I and Type II errors
+#4)p-values
+
+#Atliekant multiple hypothesis testing mes tikriname individualiai kiekvieną nulinę hipotezę. Kad galėtume atmesti bent kelias nulines hipotezes. 
+```
