@@ -19,7 +19,7 @@ output: html_document
  ```
 - Automatically download the data from GEO
 ```{r}
-gset = getGEO("GSE19711", GSEMatrix=FALSE, getGPL=FALSE)
+# gset = getGEO("GSE19711", GSEMatrix=FALSE, getGPL=FALSE)
 ```
 - Obtain the matrix of beta values where each row corresponds to probes and each column corresponds to samples
 ```{r}
@@ -43,15 +43,14 @@ data.matrix[1:5,]
 ```{r}
 samples = names(GSMList(gset))
 lenght(samples)
-[1] 540
+
 probesets = Table(GSMList(gset)[[1]])$ID
 lenght(probesets)
-[1] 27578
 ```
 - How are the beta values distributed?
  ```{r}
  betaVals = Table(GSMList(gset)[[1]])$VALUE
- plot(betaVals)
+ 
  ```
 - Do your probes have names?
 ```{r}
