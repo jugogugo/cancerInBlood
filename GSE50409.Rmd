@@ -47,7 +47,7 @@ identical(t1, t2)
 - Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
 ```{r}
 pData(featureData(gse50409[[1]]))[1:20,c(10,8,22,23)]
-#No our genome version appears to be hm27 (HumanMethylation27)
+#No our genome version appears to be hg18.
 ```
 - Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
 ```{r}
