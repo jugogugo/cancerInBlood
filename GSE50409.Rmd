@@ -2,13 +2,106 @@
 title: 'GSE50409'
 output: html_document
 ---
-
 # Authors
 
-- List
-- The 
-- Authors
-- Here
+- Leonas Rėčkus
+- Liza Tofan
+- Aurimas Vilys
+- Karolina Butrimaitė
+- Ignas Labalaukis
+- Domas Motiejūnas
 
 # Analysis
 
+```{r setup, echo=FALSE, include=FALSE}
+library(GEOquery)
+library(data.table)
+```
+
+- Automatically download the data from GEO
+
+```{r echo=FALSE, include=FALSE}
+gse50409 <- getGEO("gse50409", destdir="./")
+```
+
+- Obtain the matrix of beta values where each row corresponds to probes and each column corresponds to samples
+
+```{r}
+matrix <- exprs(gse50409[[1]])
+head(rownames(matrix))
+head(colnames(matrix))
+```
+
+- How many samples and how many probes do you have in the data?
+
+Number of probes:
+```{r}
+probes <- rownames(matrix)
+length(probes)
+```
+
+Number of samples: 
+```{r}
+samplesNames <- colnames(matrix)
+length(samplesNames)
+```
+
+- How are the beta values distributed?
+
+```{r out.width = '100%'}
+hist(matrix, breaks=1000)
+```
+
+- Do your probes have names?
+
+These are the probe names:
+```{r}
+head(rownames(matrix))
+```
+
+- Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
+
+```{r}
+annotation <- getGEO("GPL13534", destdir = "./")
+annotation <- Table(annotation)
+# setDT(annotation)
+
+# Now match the rows in annotation that are present in our data
+commonProbes <- intersect(annotation$ID, rownames(matrix))
+cat("Number of probes for which hg19 annotation is available: ", length(commonProbes), "\n")
+
+i <- match(commonProbes, annotation$ID)
+annotation <- annotation[i, ]
+
+i <- match(commonProbes, rownames(matrix))
+matrix <- matrix[i,]
+stopifnot(all(rownames(matrix) == annotation$ID))
+
+head(annotation)
+```
+
+- Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
+
+```{r}
+disease <- pData(phenoData(gse50409[[1]]))
+disease[1:20,1]
+```
+- For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+```{r}
+sick <- which(disease$source_name_ch1 == "Bladder cancer case")
+control <- which(disease$source_name_ch1 != "Bladder cancer case")
+t.test(matrix[1,control], matrix[1,sick])
+```
+- From the t-test, obtain the p value.
+```{r}
+pvals <- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})
+```
+- Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+```{r out.width = '100%'}
+hist(pvals, breaks = 1000)
+#The p-value graph should be distributed around zero. What we got appears to be the expected result, because in the graph it is clear that frequency of probes with p-value zero or very close to it is the highest, while the frequency of probes with bigger p-value plummets extremely.
+```
+- Performance-wise, how long will it take to compute the test for all probes?
+```{r}
+system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))
+```

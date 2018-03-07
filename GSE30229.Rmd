@@ -1,14 +1,119 @@
 ---
-title: 'GSE30229'
+title: "GSE30229"
+date: '2018 m. kovas'
 output: html_document
 ---
-
 # Authors
-
-- List
-- The 
-- Authors
-- Here
+- Edgaras Legus
+- Vitalija Misiukonytė
+- Brigita Ižganaitytė
+- Gabrielė Dilytė
+- Dalia Masilionytė
+- Reda Vaisėtaitė
+- Paulius Matijošaitis
+- Dovilė Patiejūnaitė
 
 # Analysis
+## Step 2
+Downloading the data using GEO 
+```{r, include=TRUE, echo=TRUE}
+library(GEOquery)
+GSE30229 <- getGEO("GSE30229", destdir = "./")
+```
 
+Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
+
+```{r, include=TRUE, echo=TRUE}
+betaValueMatrix <- exprs(GSE30229[[1]])
+head(rownames(betaValueMatrix))
+head(colnames(betaValueMatrix))
+```
+
+Counting samples and probes in our data
+```{r, include=TRUE, echo=TRUE}
+samples <- colnames(betaValueMatrix)
+probes <- rownames(betaValueMatrix)
+length(samples)
+length(probes)
+```
+
+Distribution of beta values
+```{r, include=TRUE, echo=TRUE}
+hist(betaValueMatrix, breaks=1000, xlab = "Beta Value ", border = "green", main = "Beta value distribution")
+```
+
+Names of probes
+```{r, include=TRUE, echo=TRUE}
+head(rownames(betaValueMatrix))
+```
+
+Annotation that tells the coordinate (in hg19) of each probe and its genomic features
+```{r, include=TRUE, echo=TRUE}
+annotate <- getGEO("GPL8490", destdir = "./")
+annotate <- Table(annotate)
+
+annotated_probes <- intersect(annotate$ID, rownames(betaValueMatrix))
+cat("Probes number: ", length(annotated_probes), "\n")
+
+i <- match(annotated_probes, annotate$ID)
+annotate <- annotate[i, ]
+
+i <- match(annotated_probes, rownames(betaValueMatrix))
+betaValueMatrix <- betaValueMatrix[i,]
+stopifnot(all(rownames(betaValueMatrix) == annotate$ID))
+
+head(annotate)
+```
+
+Samples which correspond to healthy individuals, and which samples correspond to the sick ones
+```{r, include=TRUE, echo=TRUE}
+sickness <- pData(phenoData(GSE30229[[1]]))
+sickness[1:20,1]
+```
+
+## Step 3
+
+For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+
+```{r, include=TRUE, echo=TRUE}
+controlSamples <- which(sickness$`disease:ch1` == 'control')
+caseSamples <- which(sickness$`disease:ch1` == 'HNSCC case')
+t.test(betaValueMatrix[1,controlSamples], betaValueMatrix[1,caseSamples])
+```
+
+From the t-test, obtain the p value.
+```{r, include=TRUE, echo=TRUE}
+pvalues = c()
+for (i in 1:length(rownames(betaValueMatrix))) {
+     pvalues[i] <- t.test(betaValueMatrix[i,controlSamples], betaValueMatrix[i,caseSamples])$p.value
+     
+}
+```
+Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+
+```{r, include=TRUE, echo=TRUE}
+#The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values.
+#The “depth” of the histogram on the right side shows the values that are null.
+hist(pvalues, col = "green", breaks = 100)
+```
+
+Performance-wise, how long will it take to compute the test for all probes?
+```{r, include=TRUE, echo=TRUE}
+# We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests
+```
+
+## Step 4
+
+What is multiple hypothesis testing?
+```{r, include=TRUE, echo=TRUE}
+#Kitaip jie dar gali būti vadinami “p-hacking”. Tai statistinių metodų naudojimas tam, kad išgauti geresnius, reikšmingesnius rezultatus. 
+#Yra eksperimentų, kurių duomenyse yra didelis kintamųjų skaičius. Tokie didelio našumo eksperimetai atliekami genetikoje ir image analysis. 
+
+#Į šį testavimo būdą įeina:
+#1) skirtumai tarp nulinės ir alternatyvios hipotezės
+#2) reikšmingumo lygiai
+#3) Type I and Type II errors
+#4)p-values
+
+#Atliekant multiple hypothesis testing mes tikriname individualiai kiekvieną nulinę hipotezę. Kad galėtume atmesti bent kelias nulines hipotezes. 
+```

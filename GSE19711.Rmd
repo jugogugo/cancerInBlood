@@ -5,10 +5,14 @@ output: html_document
 
 # Authors
 
+
+- Rimvydas Noreika
+- Tautminas Cibulskis
 - Gabrielius Erignis
+- Rolandas Porėjus
+
 
 # Analysis
-
  ```{r, echo=FALSE, include=FALSE}
 library(GEOquery)
  ```
@@ -49,6 +53,7 @@ head(annotation)
 disease = pData(phenoData(gset[[1]]))
 disease[1:20,1]
 ```
+
 For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
 ```{r}
 pvalarray = array()
