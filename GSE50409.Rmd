@@ -32,14 +32,16 @@ samplesNames <- sampleNames(phenoData(gse50409[[1]]))
 length(samplesNames)
 ```
 - How are the beta values distributed?
-
+```{r out.width = '100%'}
+boxplot(matrix, outline = FALSE, boxwex = 0.7, notch = T, las = 2, main = "GSE50409")
+```
 - Do your probes have names?
 ```{r}
 pData(featureData(gse50409[[1]]))[1:20,1:2]
 t1 <- row.names(featureData(gse50409[[1]]))
 t2 <- as.character(featureData(gse50409[[1]])$Name)
 identical(t1, t2)
-#Probe names are identical to probe
+#Probe names are identical to probe ID
 ```
 - Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
 ```{r}
@@ -47,6 +49,6 @@ gse50409
 ```
 - Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
 ```{r}
-disease <- pData(phenoData(gse50409[[1]])[1:20,1])
-disease
+disease <- pData(phenoData(gse50409[[1]]))
+disease[1:20,1]
 ```
