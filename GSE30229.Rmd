@@ -1,17 +1,19 @@
 ---
 title: "GSE30229"
-authors:
-- name: Edgaras Legus
-- name: Vitalija Misiukonytė
-- name: Brigita Ižganaitytė
-- name: Gabrielė Dilytė
-- name: Dalia Masilionytė
-- name: Reda Vaisėtaitė
-- name: Paulius Matijošaitis
-- name: Dovilė Patiejūnaitė
-date: '2018 m. kovas 6 d.'
+date: '2018 m. kovas'
 output: html_document
 ---
+# Authors
+- Edgaras Legus
+- Vitalija Misiukonytė
+- Brigita Ižganaitytė
+- Gabrielė Dilytė
+- Dalia Masilionytė
+- Reda Vaisėtaitė
+- Paulius Matijošaitis
+- Dovilė Patiejūnaitė
+
+# Analysis
 Downloading the data using GEO 
 ```{r, include=TRUE, echo=TRUE}
 library(GEOquery)
@@ -67,4 +69,3 @@ Samples which correspond to healthy individuals, and which samples correspond to
 sickness <- pData(phenoData(GSE30229[[1]]))
 sickness[1:20,1]
 ```
-
