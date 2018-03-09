@@ -35,9 +35,11 @@ probeset = rownames(gsetexpr)
 length(probeset)
 ```
 - How are the beta values distributed?
+
  ```{r}
  hist(gsetexpr)
  ```
+ 
 - Do your probes have names?
 ```{r}
 probeset[1:5]
@@ -53,3 +55,31 @@ head(annotation)
 disease = pData(phenoData(gset[[1]]))
 disease[1:20,1]
 ```
+For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
+```{r}
+pvalarray = array()
+for (i in 1:length(probeset)){
+  case = gsetexpr[i, grep("Case", disease$`sample type:ch1`)]
+  control = gsetexpr[i, grep("Control", disease$`sample type:ch1`)]
+  tt = t.test(case, control)
+  pvalarray[i] = tt$p.value
+} 
+```
+
+Plot the distribution of p values. What is the expected distribution? How does it differ from what you get?
+We get Anti-conservative p-values. All null p-values form a flat distribution. Peak is close to 0 - that is where the alternative hypotheses are. Not all p-values less than .05 are significant. High p-values indicate false negatives - hypotheses that are not detectable with our test. The left of the histogram shows significance. The right side shows how many p-values are null.
+
+```{r}
+hist(pvalarray, breaks = 100)
+```
+
+Performance-wise, how long will it take to compute the test for all probes?
+```{r}
+system.time( for (i in 1:length(probeset)){
+  case = gsetexpr[i, grep("Case", disease$`sample type:ch1`)]
+  control = gsetexpr[i, grep("Control", disease$`sample type:ch1`)]
+  tt = t.test(case, control)
+  pvalarray[i] = tt$p.value
+})
+```
+
