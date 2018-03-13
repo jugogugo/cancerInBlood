@@ -125,10 +125,12 @@ We should find genes and then chromosomes (where probes are located). We do so b
 source("https://bioconductor.org/biocLite.R")
 biocLite("impute")
 library(impute)
+```
 
+Some samples could be outliers messing up our results. How to detect outliers?
+```{r}
 imputed <- impute.knn(gsetexpr)
 pca <- prcomp(t(imputed$data), scale=FALSE)
-
 
 x <- 1:10
 y <- (pca$sdev  / sum(pca$sdev))[1:10]
@@ -144,6 +146,7 @@ h <- hclust(d, method="average")
 plot(h)
 ```
 
+Thousands of t-tests can be computed at once within seconds. How? limma
 ```{r}
 library(limma)
 age <- rnorm(ncol(gsetexpr), mean=60)
@@ -154,5 +157,11 @@ topTable(fit, coef=2)
 # => rezultatas: reiksmingai pakite probai del ligos, atsizvelgiant i amziaus ir lyties skirtumus!
 
 # amzius: https://dnamage.genetics.ucla.edu, kraujo kompozicija
+```
+
+Permutacijos!!
+```{r}
+
+
 ```
 
