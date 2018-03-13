@@ -119,13 +119,24 @@ Let's deal with the p values.
 
 Once we get here, we can work on the other issues:
 
-- Thousands of t-tests can be computed at once within seconds. How?
+- Normalizavimas, kvantiliu normalizacija
+
+- PCA
+
+- Reikia atmesti lytiniu chromosomu probus
 
 - Some samples could be outliers messing up our results. How to detect outliers?
 
+
+- Thousands of t-tests can be computed at once within seconds. How? limma
+
+- Permutacijos!!
+
 - Remember that the experiment may have more than one variable (disease). Age may be a factor two. How can we account for differences in age?
 
-- Blood cellular composition may be an issue too. Maybe the differences we observe between patient groups are not actual methylation differences but artefacts of varying blood cellular composition? How shall we deal with that?
+- Age and Blood cellular composition may be an issue too. Maybe the differences we observe between patient groups are not actual methylation differences but artefacts of varying blood cellular composition? How shall we deal with that?
+
+- Rezultatas: pakite probai!!!
 
 - Once we have analysis of all three datasets, can we pull them all together and make conclusions?
 

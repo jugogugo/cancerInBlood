@@ -206,7 +206,7 @@ $(document).ready(function () {
 </div>
 
 
-<div id="authors" class="section level1">
+<section id="authors" class="level1">
 <h1>Authors</h1>
 <ul>
 <li>Rimvydas Noreika</li>
@@ -214,8 +214,8 @@ $(document).ready(function () {
 <li>Gabrielius Erignis</li>
 <li>Rolandas Porėjus</li>
 </ul>
-</div>
-<div id="analysis" class="section level1">
+</section>
+<section id="analysis" class="level1">
 <h1>Analysis</h1>
 <ul>
 <li>Automatically download the data from GEO</li>
@@ -252,7 +252,7 @@ length(probeset)</code></pre>
 <ul>
 <li>How are the beta values distributed?</li>
 </ul>
-<p><code>r  hist(gsetexpr)</code></p>
+<pre class="r"><code>hist(gsetexpr)</code></pre>
 <p><img src="GSE19711_files/figure-html/unnamed-chunk-5-1.png" width="672" /> - Do your probes have names?</p>
 <pre class="r"><code>probeset[1:5]</code></pre>
 <pre><code>## [1] &quot;cg00000292&quot; &quot;cg00002426&quot; &quot;cg00003994&quot; &quot;cg00005847&quot; &quot;cg00006414&quot;</code></pre>
@@ -268,86 +268,51 @@ head(annotation)</code></pre>
 ## 1 cg00000292 cg00000292        TOP      990370
 ## 2 cg00002426 cg00002426        TOP     6580397
 ## 3 cg00003994 cg00003994        TOP     7150184
-## 4 cg00005847 cg00005847        BOT     4850717
-## 5 cg00006414 cg00006414        BOT     6980731
-## 6 cg00007981 cg00007981        TOP     5260689
 ##                                     AlleleA_ProbeSeq AddressB_ID
 ## 1 AAACATTAATTACCAACCACTCTTCCAAAAAACACTTACCATTAAAACCA     6660678
 ## 2 AATATAATAACATTACCTTACCCATCTTATAATCAAACCAAACAAAAACA     6100343
 ## 3 AATAATAATAATACCCCCTATAATACTAACTAACAAACATACCCTCTTCA     7150392
-## 4 TACTATAATACACCCTATATTTAAAACACTAAACTTACCCCATTAAAACA     1260113
-## 5 CTCAAAAACCAAACAAAACAAAACCCCAATACTAATCATTAATAAAATCA     4280093
-## 6 CCAAATTCAAAAAACTACAACTAAAACTAACTATAAACAAAATAATCACA     6860356
 ##                                     AlleleB_ProbeSeq GenomeBuild Chr
 ## 1 AAACATTAATTACCAACCGCTCTTCCAAAAAACACTTACCATTAAAACCG          36  16
 ## 2 AATATAATAACATTACCTTACCCGTCTTATAATCAAACCAAACGAAAACG          36   3
 ## 3 AATAATAATAATACCCCCTATAATACTAACTAACAAACATACCCTCTTCG          36   7
-## 4 TACTATAATACACCCTATATTTAAAACACTAAACTTACCCCATTAAAACG          36   2
-## 5 CTCGAAAACCGAACAAAACAAAACCCCAATACTAATCGTTAATAAAATCG          36   7
-## 6 CCAAATTCAAAAAACTACGACTAAAACTAACTATAAACAAAATAATCACG          36  11
 ##     MapInfo  Ploidy      Species      Source SourceVersion SourceStrand
 ## 1  28797601 diploid Homo sapiens NCBI:RefSeq          36.1          TOP
 ## 2  57718583 diploid Homo sapiens NCBI:RefSeq          36.1          TOP
 ## 3  15692387 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
-## 4 176737319 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
-## 5 148453770 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
-## 6  93502242 diploid Homo sapiens NCBI:RefSeq          36.1          BOT
 ##                                            SourceSeq
 ## 1 CGGCCTCAATGGTAAGTGTCCCTTGGAAGAGCGGCTGGTAATTAATGCCC
 ## 2 CGCTCTCGTCTGGTTTGATCACAAGACGGGCAAGGTAATGTCACCACATT
 ## 3 GGTGGTGGTGGTGCCCCCTGTGATGCTGGCTGGCAAACATGCCCTCTTCG
-## 4 TACTGTAATGCACCCTGTATTTAAGGCACTGGGCTTGCCCCATTAAAGCG
-## 5 CTCGGAAACCGAGCAGGGCAAAACCCCAGTGCTGATCGTTAGTGGGATCG
-## 6 CCAAGTTCAAGGGGCTGCGACTGGAGCTGGCTGTGGACAAGATGGTCACG
 ##                                                                                                                  TopGenomicSeq
 ## 1 TGGGGTGAGTGAGACCACGGGCCTCACCCCGGACCAAGTTAAGCGGAATCTGGAGAAATA[CG]GCCTCAATGGTAAGTGTCCCTTGGAAGAGCGGCTGGTAATTAATGCCCTCCTGCACCCCC
 ## 2 CCGCTGTCGACCAGCGCAGAATAATGCCACTTTTGATTGCAAAGTGCTATCAAGGAACCA[CG]CTCTCGTCTGGTTTGATCACAAGACGGGCAAGGTAATGTCACCACATTGTCCAGCGGCAT
 ## 3 GGTGGTGGTGGTGGTGGTGGTGGTGCCCCCTGTGATGCTGGCTGGCAAACATGCCCTCTT[CG]TTGGGGTATCCCGCGATTATGCAAGATGAGGAAGAAGTAGAGAGCTCGGGGTAAGACATA
-## 4 CAGATAACTCAATACTGTAATGCACCCTGTATTTAAGGCACTGGGCTTGCCCCATTAAAG[CG]CCATAAATTTGAAGGCCAATGATCGGTTTTCATGTAACGGGTGGTACTTCATACTGAAGT
-## 5 GAACCGGCCCAGCTCGGAAACCGAGCAGGGCAAAACCCCAGTGCTGATCGTTAGTGGGAT[CG]CGCCTGTGAATAGCCACTGCCCTCCAGCCTGGGCAACAGCCAGACCCCGTCTGTTTAATA
-## 6 AGCCCACGGAGCCCAAGTTCAAGGGGCTGCGACTGGAGCTGGCTGTGGACAAGATGGTCA[CG]TGCATTGCGGTGGGGCTGCCCCTGCTGCTCATCTCGCTGGCCTTCGCGCAGGAGATCTCG
 ##   Next_Base Color_Channel TSS_Coordinate Gene_Strand      Gene_ID Symbol
 ## 1         T           Red       28797310           +   GeneID:487 ATP2A1
 ## 2         T           Red       57718214           +  GeneID:7871  SLMAP
 ## 3         T           Red       15692819           -  GeneID:4223  MEOX2
-## 4         C           Grn      176737051           +  GeneID:3232  HOXD3
-## 5         C           Grn      148454441           + GeneID:57541 ZNF398
-## 6         T           Red       93501742           + GeneID:24145  PANX1
 ##                                  Synonym   Accession         GID
 ## 1                         ATP2A; SERCA1; NM_173201.2 GI:47132613
 ## 2                        SLAP; KIAA1601; NM_007159.2 GI:56550042
 ## 3                             GAX; MOX2; NM_005924.3 GI:55956906
-## 4 HOX4; HOX1D; HOX4A; Hox-4.1; MGC10470; NM_006898.4 GI:23510372
-## 5              P51; P71; ZER6; KIAA1339; NM_020781.2 GI:25777702
-## 6               MRS1; UNQ2529; MGC21309; NM_015368.3 GI:39995063
 ##                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         Annotation
 ## 1 isoform a is encoded by transcript variant a; sarcoplasmic/endoplasmic reticulum calcium ATPase 1; calcium pump 1; SR Ca(2+)-ATPase 1; calcium-transporting ATPase sarcoplasmic reticulum type; fast twitch skeletal muscle isoform; endoplasmic reticulum class 1/2 Ca(2+) ATPase; go_component: membrane; go_component: integral to membrane; go_component: sarcoplasmic reticulum; go_component: smooth endoplasmic reticulum; go_function: ATP binding; go_function: hydrolase activity; go_function: nucleotide binding; go_function: calcium ion binding; go_function: magnesium ion binding; go_function: calcium-transporting ATPase activity; go_function: hydrolase activity; acting on acid anhydrides; catalyzing transmembrane movement of substances; go_process: metabolism; go_process: cation transport; go_process: proton transport; go_process: calcium ion transport; go_process: regulation of striated muscle contraction
 ## 2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        Sarcolemmal-associated protein; go_component: integral to plasma membrane; go_component: smooth endoplasmic reticulum; go_function: unfolded protein binding; go_process: protein folding; go_process: muscle contraction
 ## 3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    growth arrest-specific homeo box; go_component: nucleus; go_function: transcription factor activity; go_process: circulation; go_process: development; go_process: regulation of transcription; DNA-dependent
-## 4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          homeobox protein Hox-D3; Hox-4.1; mouse; homolog of; homeo box D3; go_component: nucleus; go_function: transcription factor activity; go_process: morphogenesis; go_process: regulation of transcription; DNA-dependent
-## 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              isoform b is encoded by transcript variant 2; zinc finger DNA binding protein ZER6; zinc finger-estrogen receptor interaction; clone 6; zinc finger DNA binding protein p52/p71; go_component: nucleus; go_function: DNA binding; go_function: zinc ion binding; go_function: metal ion binding; go_function: transcriptional activator activity; go_process: transcription; go_process: regulation of transcription; DNA-dependent
-## 6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  innexin; go_component: membrane; go_component: gap junction; go_component: integral to membrane
 ##                                              Product Distance_to_TSS
 ## 1 ATPase; Ca++ transporting; fast twitch 1 isoform a             291
 ## 2                      sarcolemma associated protein             369
 ## 3                             mesenchyme homeo box 2             432
-## 4                                        homeobox D3             268
-## 5                          zinc finger 398 isoform b             671
-## 6                                         pannexin 1             500
 ##   CPG_ISLAND  CPG_ISLAND_LOCATIONS MIR_CPG_ISLAND     RANGE_GB RANGE_START
 ## 1       TRUE  16:28797486-28797825                 NC_000016.8    28797486
 ## 2       TRUE   3:57716811-57718675                NC_000003.10    57716811
 ## 3       TRUE   7:15691512-15693551                NC_000007.12    15691512
-## 4      FALSE                                                            NA
-## 5       TRUE 7:148453584-148455804                NC_000007.12   148453584
-## 6       TRUE  11:93501124-93502564                 NC_000011.8    93501124
 ##   RANGE_END RANGE_STRAND      GB_ACC   ORF
 ## 1  28797825            + NM_173201.2   487
 ## 2  57718675            + NM_007159.2  7871
 ## 3  15693551            - NM_005924.3  4223
-## 4        NA              NM_006898.4  3232
-## 5 148455804            + NM_020781.2 57541
-## 6  93502564            + NM_015368.3 24145</code></pre>
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 3 rows ]</code></pre>
 <ul>
 <li>Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?</li>
 </ul>
@@ -364,7 +329,7 @@ disease[1:20,1]</code></pre>
 ## [17] Peripheral Whole Blood 114766 Peripheral Whole Blood 109691
 ## [19] Peripheral Whole Blood 119821 Peripheral Whole Blood 113049
 ## 540 Levels: Peripheral Whole Blood 100097 ... Peripheral Whole Blood 123698</code></pre>
-</div>
+</section>
 
 
 
