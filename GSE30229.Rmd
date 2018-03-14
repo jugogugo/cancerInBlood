@@ -106,13 +106,13 @@ Performance-wise, how long will it take to compute the test for all probes?
 
 What is multiple hypothesis testing?
 ```{r, include=TRUE, echo=TRUE}
-#Multiple hypothesis testing occures when we have many different hypotheses and we want to test whether all null hypotheses #are true using a single test. Testing them simultaneously increases the chance of getting more "significant" results. #Adjustion for multiple hypothesis testing reduces the chances by increasing the needed "significance".
+#Multiple hypothesis testing occures when we have many different hypotheses and we want to test whether all null hypotheses are true using a single test. Testing them simultaneously increases the chance of getting more "significant" results. #Adjustion for multiple hypothesis testing reduces the chances by increasing the needed "significance".
 ```
 
 How should we adjust for multiple hypothesis testing in our case?
 ```{r, include=TRUE, echo=TRUE}
 pvalues.adjusted <- p.adjust(pvalues, method="BH", n = length(pvalues))
-#For adjustion we chose "BH" method because it controls the proportion of false discovery which is expected among the rejected #hypotheses.
+#For adjustion we chose "BH" method because it controls the proportion of false discovery which is expected among the rejected hypotheses.
 ```
 
 Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
