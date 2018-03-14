@@ -217,9 +217,12 @@ pairs(pca_first$x[-outs,1:4])
 Permutations
 ```{r, include=TRUE, echo=TRUE}
 set.seed(123)
-groups <- sample(c(0,1), ncol(normalizedMatrix_without_1stoutliers), replace = TRUE)
+gender <- c('male','female')
+groups <- sample(as.factor(gender),
+ncol(normalizedMatrix_without_1stoutliers), replace = TRUE)
 expected <- numeric(100)
-for (iteration in 1:2) {
+means <- vector()
+for (iteration in 1:100) {
   groupsRandom <- sample(groups)
   #pvalsRandom <- apply(normalizedMatrix_without_outliers[1:1000,],1, function(normalized_matrix_without_outliers) {lmFit(normalized_matrix_without_outliers, groupsRandom)$P.Value})
   #expected[iteration] <- mean(pvalsRandom < 0.05)
@@ -227,14 +230,18 @@ for (iteration in 1:2) {
   model <- model.matrix(~ 1 + groupsRandom)
   fit <- lmFit(normalizedMatrix_without_1stoutliers, model)
   fit <- eBayes(fit)
-  print(mean(fit$p.value < 0.05))
+  means[iteration] <- (mean(fit$p.value < 0.05))
 }
+
 ```
 Final analysis
 ```{r, include=TRUE, echo=TRUE}
-age <- rnorm(ncol(normalizedMatrix_without_outliers), mean=60)
+age <- rnorm(ncol(normalizedMatrix_without_1stoutliers), mean=60)
 model <- model.matrix(~ 1 + groups)
-fit <- lmFit(normalizedMatrix_without_outliers, model)
+fit <- lmFit(normalizedMatrix_without_1stoutliers, model)
 fit <- eBayes(fit)
 topTable(fit, coef=2)
+meann <- mean(fit$p.value<0.05)
+plot(means, type='l')
+abline(h=meann, col='red')
 ```
