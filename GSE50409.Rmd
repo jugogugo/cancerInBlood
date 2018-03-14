@@ -68,7 +68,11 @@ annotation <- Table(annotation)
 
 # Now match the rows in annotation that are present in our data
 commonProbes <- intersect(annotation$ID, rownames(matrix))
-cat("Number of probes for which hg19 annotation is available: ", length(commonProbes), "\n")
+```
+Number of probes for which hg19 annotation is available: `r length(commonProbes)`
+
+
+```{r}
 
 i <- match(commonProbes, annotation$ID)
 annotation <- annotation[i, ]
@@ -84,9 +88,10 @@ head(annotation)
 
 ```{r}
 disease <- pData(phenoData(gse50409[[1]]))
-disease[1:20,1]
+as.character(disease[1:20,1])
 ```
 - For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+
 ```{r}
 sick <- which(disease$source_name_ch1 == "Bladder cancer case")
 control <- which(disease$source_name_ch1 != "Bladder cancer case")
@@ -95,7 +100,28 @@ t.test(matrix[1,control], matrix[1,sick])
 - From the t-test, obtain the p value.
 ```{r}
 pvals <- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})
+hist(pvals)
+observed <- mean(pvals < 0.05)
+
+
+set.seed(123)
+## >>> PG: groups wasn't defined (created dummy object)
+groups <- sample(0:1, ncol(matrix), replace = TRUE)
+expected <- numeric(100)
+## >>> PG: decreased number of permutations
+for (iteration in 1:2) {
+    groupsRandom <- sample(groups)
+    pvalsRandom <- apply(matrix[1:1000,],1,function(x) {t.test(x ~ groupsRandom)$p.value})
+    expected[iteration] <- mean(pvalsRandom < 0.05)
+    print(iteration)
+}
+
+hist(expected, xlim=c(0, 0.5), xlab="Expected fraction of significant probes")
+abline(v=observed, col="red")
+mean(observed < expected)
+
 ```
+
 - Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
 ```{r out.width = '100%'}
 hist(pvals, breaks = 1000)
@@ -105,3 +131,47 @@ hist(pvals, breaks = 1000)
 ```{r}
 system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))
 ```
+
+
+## PCA
+
+```{r}
+source("https://bioconductor.org/biocLite.R")
+biocLite("impute")
+library(impute)
+
+imputed <- impute.knn(matrix)
+pca <- prcomp(t(imputed$data), scale=FALSE)
+
+
+x <- 1:10
+y <- (pca$sdev  / sum(pca$sdev))[1:10]
+plot(x, y, type='h')
+
+
+pairs(pca$x[, 1:3], col=as.factor(groups))
+
+table(annotation$CHR)
+
+d <- dist(pca$x[, 1:5])
+h <- hclust(d, method="average")
+plot(h)
+```
+
+```{r}
+library(limma)
+age <- rnorm(ncol(matrix), mean=60)
+model <- model.matrix(~ 1 + groups + age)
+fit <- lmFit(matrix, model)
+fit <- eBayes(fit)
+topTable(fit, coef=2)
+# => rezultatas: reiksmingai pakite probai del ligos, atsizvelgiant i amziaus ir lyties skirtumus!
+
+# amzius: https://dnamage.genetics.ucla.edu, kraujo kompozicija
+```
+
+
+
+
+
+

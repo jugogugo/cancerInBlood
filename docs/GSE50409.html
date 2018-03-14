@@ -206,7 +206,7 @@ $(document).ready(function () {
 </div>
 
 
-<div id="authors" class="section level1">
+<section id="authors" class="level1">
 <h1>Authors</h1>
 <ul>
 <li>Leonas Rėčkus</li>
@@ -216,8 +216,8 @@ $(document).ready(function () {
 <li>Ignas Labalaukis</li>
 <li>Domas Motiejūnas</li>
 </ul>
-</div>
-<div id="analysis" class="section level1">
+</section>
+<section id="analysis" class="level1">
 <h1>Analysis</h1>
 <ul>
 <li><p>Automatically download the data from GEO</p></li>
@@ -263,9 +263,8 @@ length(samplesNames)</code></pre>
 # setDT(annotation)
 
 # Now match the rows in annotation that are present in our data
-commonProbes &lt;- intersect(annotation$ID, rownames(matrix))
-cat(&quot;Number of probes for which hg19 annotation is available: &quot;, length(commonProbes), &quot;\n&quot;)</code></pre>
-<pre><code>## Number of probes for which hg19 annotation is available:  25978</code></pre>
+commonProbes &lt;- intersect(annotation$ID, rownames(matrix))</code></pre>
+<p>Number of probes for which hg19 annotation is available: 25978</p>
 <pre class="r"><code>i &lt;- match(commonProbes, annotation$ID)
 annotation &lt;- annotation[i, ]
 
@@ -279,101 +278,87 @@ head(annotation)</code></pre>
 ## 199 cg08455548 cg08455548    21731485
 ## 359 cg20401549 cg20401549    66684405
 ## 433 cg00029931 cg00029931    45616329
-## 436 cg00032666 cg00032666    49773333
-## 445 cg00060882 cg00060882    11804497
 ##                                       AlleleA_ProbeSeq AddressB_ID
 ## 97  AACCAACTCRACTATTAACAACTCTATTAACAAAACTATTTATCTTTCTC          NA
 ## 199 TTATATACACAAAATTTTACTCAAAAAAACTAACAACCCRAAAACRACRC          NA
 ## 359 CAAACRCCAATTTCACTTTCTATTTTTAAACTTCACTTTTACTAAACCAC          NA
 ## 433 TCAACRTTTCRTCACTTTATCTCTTTTAATAAACTCTACTACRTAATAAC          NA
-## 436 AAAAAATTTTCCTAAATCTCACTACATATCACACAAAAACAAATCCAAAC          NA
-## 445 ACCTAATAAATATTTATACAAACAATACTAAAAACAACCACCAAACCCCC          NA
 ##     AlleleB_ProbeSeq Infinium_Design_Type Next_Base Color_Channel
 ## 97                                     II                        
 ## 199                                    II                        
 ## 359                                    II                        
 ## 433                                    II                        
-## 436                                    II                        
-## 445                                    II                        
 ##                                                                                                                 Forward_Sequence
 ## 97  GTCACTGAGATAACCAGCTCGGCTGTTAGCAACTCTGTTAGCAAAGCTGTTTGTCTTTCT[CG]GAAACAACAGGTGAGAATTCCCCTTACAGACCTGCCCATGCTTTCTAAAGTGGCTCTCCC
 ## 199 CGAGGAGAACATTGTATGCACAGGGTTTTGCTCAGGAAAGCTAGCAGCCCGAAAGCGGCG[CG]TTTTCTTCAGCAGCGGGTCCCGCACGCGAGAGTGCTGCCAGCACGCTTTCTGCCTCCTTC
 ## 359 CCTCTCCTCACCAAACGCCAATTTCACTTTCTATTTTTGAGCTTCACTTTTGCTGAGCCA[CG]CCCTCCCTGTCCCCGGGCCACCCAGCCTCCCCATCTTCCGGGTTTGGGTGCAGCAACGCG
 ## 433 GCTTCCCTCGGGGACGGGGAGGCCAGAGGATCTGGGAAAAACACTGCTCCCTTCACTGAA[CG]CCACTACGTAGCAGAGTCCACCAAAAGAGATAAAGTGACGAAACGTTGAAAGCTGCGGGG
-## 436 TCAGAGAACAGAGGAAGTTTTCCTGAATCTCACTGCATATCACACAAAAGCAAATCCAGA[CG]TAGGACCCAGATATCATACTTGTAGGCCCAGTGTTATTTTAGTCACATGAAGCTGCTCCT
-## 445 TCTCTCCCAGGCCAGCGCGCGCGCCGGGTTGCATCACCCGCCTCGCACGGGCCGGCGGGG[CG]GGGGTTTGGTGGCTGCCCTCAGTATTGCCTGCACAAATATCTACCAGGTCTGCGACGAAT
 ##     Genome_Build CHR   MAPINFO
 ## 97            37   Y   3447157
 ## 199           37   Y   4867968
 ## 359           37   Y   7141681
 ## 433           37   X 100645741
-## 436           37   X 149613398
-## 445           37   X  24072811
 ##                                              SourceSeq Chromosome_36
 ## 97  ACCAGCTCGGCTGTTAGCAACTCTGTTAGCAAAGCTGTTTGTCTTTCTCG             Y
 ## 199 CGCGCCGCTTTCGGGCTGCTAGCTTTCCTGAGCAAAACCCTGTGCATACA             Y
 ## 359 AAACGCCAATTTCACTTTCTATTTTTGAGCTTCACTTTTGCTGAGCCACG             Y
 ## 433 CGCCACTACGTAGCAGAGTCCACCAAAAGAGATAAAGTGACGAAACGTTG             X
-## 436 CGTCTGGATTTGCTTTTGTGTGATATGCAGTGAGATTCAGGAAAACTTCC             X
-## 445 CCTGGTAGATATTTGTGCAGGCAATACTGAGGGCAGCCACCAAACCCCCG             X
 ##     Coordinate_36 Strand Probe_SNPs Probe_SNPs_10 Random_Loci
 ## 97        3507157      R                                   NA
 ## 199       4927968      R                                   NA
 ## 359       7201681      R                                   NA
 ## 433     100532397      F                                   NA
-## 436     149364056      R                                   NA
-## 445      23982732      F                                   NA
 ##     Methyl27_Loci UCSC_RefGene_Name UCSC_RefGene_Accession
 ## 97           TRUE   TGIF2LY;TGIF2LY    NM_139214;NM_139214
 ## 199          TRUE           PCDH11Y              NM_032971
 ## 359          TRUE              PRKY              NR_028062
 ## 433          TRUE            RPL36A              NM_021029
-## 436          TRUE            MAMLD1              NM_005491
-## 445          TRUE            EIF2S3              NM_001415
 ##     UCSC_RefGene_Group    UCSC_CpG_Islands_Name
 ## 97       5&#39;UTR;1stExon                         
 ## 199            TSS1500     chrY:4867956-4868586
 ## 359            TSS1500     chrY:7141521-7143224
 ## 433            TSS1500 chrX:100645780-100646107
-## 436            TSS1500                         
-## 445            TSS1500   chrX:24072558-24073135
 ##     Relation_to_UCSC_CpG_Island Phantom DMR Enhancer          HMM_Island
 ## 97                                                NA                    
 ## 199                      Island                   NA   Y:4927957-4928608
 ## 359                      Island                   NA   Y:7201522-7203224
 ## 433                     N_Shore                   NA                    
-## 436                                               NA                    
-## 445                      Island                   NA X:23982644-23983279
 ##     Regulatory_Feature_Name Regulatory_Feature_Group DHS RANGE_START
 ## 97                                                    NA     3447157
 ## 199                                                   NA     4867968
 ## 359                                                   NA     7141681
 ## 433   X:100645391-100646487      Promoter_Associated  NA   100645741
-## 436                                                   NA   149613398
-## 445     X:24071907-24073667      Promoter_Associated  NA    24072811
 ##     RANGE_END     RANGE_GB SPOT_ID
 ## 97    3447280  NC_000024.9        
 ## 199   4868091  NC_000024.9        
 ## 359   7141804  NC_000024.9        
 ## 433 100645864 NC_000023.10        
-## 436 149613521 NC_000023.10        
-## 445  24072934 NC_000023.10</code></pre>
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 2 rows ]</code></pre>
 <ul>
 <li>Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?</li>
 </ul>
 <pre class="r"><code>disease &lt;- pData(phenoData(gse50409[[1]]))
-disease[1:20,1]</code></pre>
-<pre><code>##  [1] 4763072011_A: Bladder cancer case 4763072011_B: Control            
-##  [3] 4763072011_C: Control             4763072011_D: Control            
-##  [5] 4763072011_E: Control             4763072011_F: Bladder cancer case
-##  [7] 4763072011_G: Control             4763072011_H: Bladder cancer case
-##  [9] 4763072011_I: Control             4763072011_L: Bladder cancer case
-## [11] 4763072021_A: Control             4763072021_B: Bladder cancer case
-## [13] 4763072021_D: Control             4763072021_E: Control            
-## [15] 4763072021_F: Control             4763072021_G: Bladder cancer case
-## [17] 4763072021_H: Control             4763072021_I: Bladder cancer case
-## [19] 4763072021_J: Control             4763072021_K: Control            
-## 428 Levels: 4763072011_A: Bladder cancer case ... 4953087046_L: Bladder cancer case</code></pre>
+as.character(disease[1:20,1])</code></pre>
+<pre><code>##  [1] &quot;4763072011_A: Bladder cancer case&quot;
+##  [2] &quot;4763072011_B: Control&quot;            
+##  [3] &quot;4763072011_C: Control&quot;            
+##  [4] &quot;4763072011_D: Control&quot;            
+##  [5] &quot;4763072011_E: Control&quot;            
+##  [6] &quot;4763072011_F: Bladder cancer case&quot;
+##  [7] &quot;4763072011_G: Control&quot;            
+##  [8] &quot;4763072011_H: Bladder cancer case&quot;
+##  [9] &quot;4763072011_I: Control&quot;            
+## [10] &quot;4763072011_L: Bladder cancer case&quot;
+## [11] &quot;4763072021_A: Control&quot;            
+## [12] &quot;4763072021_B: Bladder cancer case&quot;
+## [13] &quot;4763072021_D: Control&quot;            
+## [14] &quot;4763072021_E: Control&quot;            
+## [15] &quot;4763072021_F: Control&quot;            
+## [16] &quot;4763072021_G: Bladder cancer case&quot;
+## [17] &quot;4763072021_H: Control&quot;            
+## [18] &quot;4763072021_I: Bladder cancer case&quot;
+## [19] &quot;4763072021_J: Control&quot;            
+## [20] &quot;4763072021_K: Control&quot;</code></pre>
 <ul>
 <li>For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.</li>
 </ul>
@@ -394,20 +379,203 @@ t.test(matrix[1,control], matrix[1,sick])</code></pre>
 <ul>
 <li>From the t-test, obtain the p value.</li>
 </ul>
-<pre class="r"><code>pvals &lt;- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})</code></pre>
+<pre class="r"><code>pvals &lt;- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})
+hist(pvals)</code></pre>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>observed &lt;- mean(pvals &lt; 0.05)
+
+
+set.seed(123)
+## &gt;&gt;&gt; PG: groups wasn&#39;t defined (created dummy object)
+groups &lt;- sample(0:1, ncol(matrix), replace = TRUE)
+expected &lt;- numeric(100)
+## &gt;&gt;&gt; PG: decreased number of permutations
+for (iteration in 1:2) {
+    groupsRandom &lt;- sample(groups)
+    pvalsRandom &lt;- apply(matrix[1:1000,],1,function(x) {t.test(x ~ groupsRandom)$p.value})
+    expected[iteration] &lt;- mean(pvalsRandom &lt; 0.05)
+    print(iteration)
+}</code></pre>
+<pre><code>## [1] 1
+## [1] 2</code></pre>
+<pre class="r"><code>hist(expected, xlim=c(0, 0.5), xlab=&quot;Expected fraction of significant probes&quot;)
+abline(v=observed, col=&quot;red&quot;)</code></pre>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
+<pre class="r"><code>mean(observed &lt; expected)</code></pre>
+<pre><code>## [1] 0</code></pre>
 <ul>
 <li>Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?</li>
 </ul>
 <pre class="r"><code>hist(pvals, breaks = 1000)</code></pre>
-<p><img src="GSE50409_files/figure-html/unnamed-chunk-11-1.png" width="100%" /></p>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-12-1.png" width="100%" /></p>
 <pre class="r"><code>#The p-value graph should be distributed around zero. What we got appears to be the expected result, because in the graph it is clear that frequency of probes with p-value zero or very close to it is the highest, while the frequency of probes with bigger p-value plummets extremely.</code></pre>
 <ul>
 <li>Performance-wise, how long will it take to compute the test for all probes?</li>
 </ul>
 <pre class="r"><code>system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))</code></pre>
 <pre><code>##    user  system elapsed 
-##   4.943   0.150   5.123</code></pre>
-</div>
+##   6.150   0.134   6.296</code></pre>
+<section id="pca" class="level2">
+<h2>PCA</h2>
+<pre class="r"><code>source(&quot;https://bioconductor.org/biocLite.R&quot;)</code></pre>
+<pre><code>## Bioconductor version 3.6 (BiocInstaller 1.28.0), ?biocLite for help</code></pre>
+<pre class="r"><code>biocLite(&quot;impute&quot;)</code></pre>
+<pre><code>## BioC_mirror: https://bioconductor.org</code></pre>
+<pre><code>## Using Bioconductor 3.6 (BiocInstaller 1.28.0), R 3.4.3 (2017-11-30).</code></pre>
+<pre><code>## Installing package(s) &#39;impute&#39;</code></pre>
+<pre><code>## 
+## The downloaded binary packages are in
+##  /var/folders/__/2xvh2pm91sb9bqt2720yn0740000gn/T//Rtmp0hWssg/downloaded_packages</code></pre>
+<pre><code>## Old packages: &#39;backports&#39;, &#39;bookdown&#39;, &#39;broom&#39;, &#39;callr&#39;, &#39;cowplot&#39;,
+##   &#39;curl&#39;, &#39;DBI&#39;, &#39;dendextend&#39;, &#39;devtools&#39;, &#39;doFuture&#39;, &#39;DT&#39;,
+##   &#39;estimability&#39;, &#39;forcats&#39;, &#39;foreach&#39;, &#39;fpc&#39;, &#39;future&#39;, &#39;git2r&#39;,
+##   &#39;globals&#39;, &#39;gridGraphics&#39;, &#39;haven&#39;, &#39;hexbin&#39;, &#39;Hmisc&#39;, &#39;hms&#39;,
+##   &#39;htmlTable&#39;, &#39;htmlwidgets&#39;, &#39;httpuv&#39;, &#39;iterators&#39;, &#39;kableExtra&#39;,
+##   &#39;knitr&#39;, &#39;listenv&#39;, &#39;lsmeans&#39;, &#39;lubridate&#39;, &#39;magick&#39;, &#39;MASS&#39;, &#39;mclust&#39;,
+##   &#39;memuse&#39;, &#39;mgcv&#39;, &#39;microbenchmark&#39;, &#39;multcomp&#39;, &#39;multipanelfigure&#39;,
+##   &#39;mvtnorm&#39;, &#39;nlme&#39;, &#39;openssl&#39;, &#39;pillar&#39;, &#39;psych&#39;, &#39;quantmod&#39;, &#39;quantreg&#39;,
+##   &#39;raster&#39;, &#39;RcppArmadillo&#39;, &#39;RcppEigen&#39;, &#39;RcppParallel&#39;, &#39;registry&#39;,
+##   &#39;reprex&#39;, &#39;rmarkdown&#39;, &#39;robustbase&#39;, &#39;rpart&#39;, &#39;rprojroot&#39;, &#39;selectr&#39;,
+##   &#39;seriation&#39;, &#39;shades&#39;, &#39;shinyjs&#39;, &#39;sp&#39;, &#39;tidyverse&#39;, &#39;timeDate&#39;,
+##   &#39;tseries&#39;, &#39;viridis&#39;, &#39;xml2&#39;, &#39;xts&#39;, &#39;yaml&#39;, &#39;zoo&#39;</code></pre>
+<pre class="r"><code>library(impute)
+
+imputed &lt;- impute.knn(matrix)</code></pre>
+<pre><code>## Cluster size 25978 broken into 18692 7286 
+## Cluster size 18692 broken into 3173 15519 
+## Cluster size 3173 broken into 1055 2118 
+## Done cluster 1055 
+## Cluster size 2118 broken into 1491 627 
+## Done cluster 1491 
+## Done cluster 627 
+## Done cluster 2118 
+## Done cluster 3173 
+## Cluster size 15519 broken into 11203 4316 
+## Cluster size 11203 broken into 5966 5237 
+## Cluster size 5966 broken into 3217 2749 
+## Cluster size 3217 broken into 965 2252 
+## Done cluster 965 
+## Cluster size 2252 broken into 1010 1242 
+## Done cluster 1010 
+## Done cluster 1242 
+## Done cluster 2252 
+## Done cluster 3217 
+## Cluster size 2749 broken into 760 1989 
+## Done cluster 760 
+## Cluster size 1989 broken into 1073 916 
+## Done cluster 1073 
+## Done cluster 916 
+## Done cluster 1989 
+## Done cluster 2749 
+## Done cluster 5966 
+## Cluster size 5237 broken into 2428 2809 
+## Cluster size 2428 broken into 1010 1418 
+## Done cluster 1010 
+## Done cluster 1418 
+## Done cluster 2428 
+## Cluster size 2809 broken into 2285 524 
+## Cluster size 2285 broken into 781 1504 
+## Done cluster 781 
+## Cluster size 1504 broken into 1031 473 
+## Done cluster 1031 
+## Done cluster 473 
+## Done cluster 1504 
+## Done cluster 2285 
+## Done cluster 524 
+## Done cluster 2809 
+## Done cluster 5237 
+## Done cluster 11203 
+## Cluster size 4316 broken into 2324 1992 
+## Cluster size 2324 broken into 937 1387 
+## Done cluster 937 
+## Done cluster 1387 
+## Done cluster 2324 
+## Cluster size 1992 broken into 1323 669 
+## Done cluster 1323 
+## Done cluster 669 
+## Done cluster 1992 
+## Done cluster 4316 
+## Done cluster 15519 
+## Done cluster 18692 
+## Cluster size 7286 broken into 3238 4048 
+## Cluster size 3238 broken into 1994 1244 
+## Cluster size 1994 broken into 854 1140 
+## Done cluster 854 
+## Done cluster 1140 
+## Done cluster 1994 
+## Done cluster 1244 
+## Done cluster 3238 
+## Cluster size 4048 broken into 2044 2004 
+## Cluster size 2044 broken into 1020 1024 
+## Done cluster 1020 
+## Done cluster 1024 
+## Done cluster 2044 
+## Cluster size 2004 broken into 1 2003 
+## Done cluster 1 
+## Cluster size 2003 broken into 852 1151 
+## Done cluster 852 
+## Done cluster 1151 
+## Done cluster 2003 
+## Done cluster 2004 
+## Done cluster 4048 
+## Done cluster 7286</code></pre>
+<pre class="r"><code>pca &lt;- prcomp(t(imputed$data), scale=FALSE)
+
+
+x &lt;- 1:10
+y &lt;- (pca$sdev  / sum(pca$sdev))[1:10]
+plot(x, y, type=&#39;h&#39;)</code></pre>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<pre class="r"><code>pairs(pca$x[, 1:3], col=as.factor(groups))</code></pre>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-14-2.png" width="672" /></p>
+<pre class="r"><code>table(annotation$CHR)</code></pre>
+<pre><code>## 
+##    1   10   11   12   13   14   15   16   17   18   19    2   20   21   22 
+## 2750 1015 1654 1453  463  797  772 1128 1482  373 1824 1594  846  293  613 
+##    3    4    5    6    7    8    9    X    Y 
+## 1451  950 1105 1418 1171  884  978  961    3</code></pre>
+<pre class="r"><code>d &lt;- dist(pca$x[, 1:5])
+h &lt;- hclust(d, method=&quot;average&quot;)
+plot(h)</code></pre>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-14-3.png" width="672" /></p>
+<pre class="r"><code>library(limma)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;limma&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:BiocGenerics&#39;:
+## 
+##     plotMA</code></pre>
+<pre class="r"><code>age &lt;- rnorm(ncol(matrix), mean=60)
+model &lt;- model.matrix(~ 1 + groups + age)
+fit &lt;- lmFit(matrix, model)
+fit &lt;- eBayes(fit)
+topTable(fit, coef=2)</code></pre>
+<pre><code>##                   logFC    AveExpr         t      P.Value adj.P.Val
+## cg08876665  0.005534704 0.04605790  4.047334 0.0000615165 0.9999503
+## cg20537992  0.020294519 0.19057726  3.866595 0.0001275730 0.9999503
+## cg14166009 -0.031519944 0.39805257 -3.471503 0.0005703576 0.9999503
+## cg23517605  0.013269129 0.18116184  3.408071 0.0007164024 0.9999503
+## cg25959506  0.005880076 0.05807848  3.402445 0.0007309133 0.9999503
+## cg05512756  0.029712498 0.34219486  3.299693 0.0010491571 0.9999503
+## cg23320056  0.004265137 0.08123674  3.261441 0.0011974819 0.9999503
+## cg02770814  0.004279779 0.03526990  3.213979 0.0014085155 0.9999503
+## cg20725021 -0.010555023 0.75687332 -3.077474 0.0022222448 0.9999503
+## cg11469778 -0.035381894 0.33545153 -3.004577 0.0028162930 0.9999503
+##                     B
+## cg08876665 -0.4572075
+## cg20537992 -1.1483814
+## cg14166009 -2.5562315
+## cg23517605 -2.7689461
+## cg25959506 -2.7876330
+## cg05512756 -3.1237759
+## cg23320056 -3.2464131
+## cg02770814 -3.3966851
+## cg20725021 -3.8171612
+## cg11469778 -4.0345576</code></pre>
+<pre class="r"><code># =&gt; rezultatas: reiksmingai pakite probai del ligos, atsizvelgiant i amziaus ir lyties skirtumus!
+
+# amzius: https://dnamage.genetics.ucla.edu, kraujo kompozicija</code></pre>
+</section>
+</section>
 
 
 
