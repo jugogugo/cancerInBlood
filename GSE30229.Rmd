@@ -167,3 +167,40 @@ imputed_2 <- impute.knn(normalizedMatrix_without_genderCh)
 pca_2 <- prcomp(t(imputed_2$data), scale=FALSE)
 pairs(pca_2$x[,1:4], col=as.factor(full_sickness$predictedGender))
 ```
+Outliers
+```{r, include=TRUE, echo=TRUE}
+#Dar karta pavaizduojame grafika be lytiniu chromosomu
+normalizedMatrix_without_genderCh <- impute.knn(normalizedMatrix_without_genderCh)$data
+pca_first <- prcomp(t(normalizedMatrix_without_genderCh))
+pairs(pca_2$x[,1:4], col=as.factor(full_sickness$predictedGender))
+
+#Identifikuojame outliers po pairs grafiko analizes, taikome PC1 ir PC2 dalims, vyksta pimrasis outlieriu salinimas
+out1 <- which(abs(pca_first$x[,1]) > 3*sd(abs(pca_first$x[,1])))
+out2 <- which(abs(pca_first$x[,2]) > 3*sd(abs(pca_first$x[,2])))
+outs <- unique(c(out1, out2))
+outs
+
+
+#Ismetame meginius, karpome eilutes is full_sickness ir stulpelius is normalizedMatrix_without_genderCh
+normalizedMatrix_without_1stoutliers <- normalizedMatrix_without_genderCh[,-c(outs)]
+full_sickness_without_1stoutliers <- full_sickness[-(outs),]
+
+#Pavaizduojame grafika be outlieriu
+pairs(pca_first$x[-outs,1:4])
+
+
+#Dabar darom antra outlieriu salinima, pritaikom PC1, PC2, PC3, PC4 dalims.
+pca_second <- prcomp(t(normalizedMatrix_without_1stoutliers))
+out1 <- which(abs(pca_second$x[,1]) > 3*sd(abs(pca_second$x[,1])))
+out2 <- which(abs(pca_second$x[,2]) > 3*sd(abs(pca_second$x[,2])))
+out3 <- which(abs(pca_second$x[,3]) > 3*sd(abs(pca_second$x[,3])))
+out4 <- which(abs(pca_second$x[,4]) > 3*sd(abs(pca_second$x[,4])))
+second_outs <- unique(c(out1, out2, out3, out4))
+second_outs
+
+normalizedMatrix_without_2ndoutliers <- normalizedMatrix_without_1stoutliers[,-c(second_outs)]
+full_sickness_without_2stoutliers <- full_sickness_without_1stoutliers[-(second_outs),]
+
+#Pavaizduojame isvalytus duomenis, be outlieriu ir be lytiniu chromosomu
+pairs(pca_second$x[-second_outs,1:4])
+```
