@@ -106,16 +106,27 @@ Performance-wise, how long will it take to compute the test for all probes?
 
 What is multiple hypothesis testing?
 ```{r, include=TRUE, echo=TRUE}
-#Kitaip jie dar gali buti vadinami "p-hacking". Tai statistiniu metodu naudojimas tam, kad isgauti geresnius, reiksmingesnius rezultatus. 
-#Yra eksperimentu, kuriu duomenyse yra didelis kintamuju skaicius. Tokie didelio nasumo eksperimetai atliekami genetikoje ir image analysis. 
+#Multiple hypothesis testing occures when we have many different hypotheses and we want to test whether all null hypotheses #are true using a single test. Testing them simultaneously increases the chance of getting more "significant" results. #Adjustion for multiple hypothesis testing reduces the chances by increasing the needed "significance".
+```
 
-#I si testavimo buda ieina:
-#1) skirtumai tarp nulines ir alternatyvios hipotezes
-#2) reiksmingumo lygiai
-#3) Type I and Type II errors
-#4)p-values
+How should we adjust for multiple hypothesis testing in our case?
+```{r, include=TRUE, echo=TRUE}
+pvalues.adjusted <- p.adjust(pvalues, method="BH", n = length(pvalues))
+#For adjustion we chose "BH" method because it controls the proportion of false discovery which is expected among the rejected #hypotheses.
+```
 
-#Atliekant multiple hypothesis testing mes tikriname individualiai kiekviena nuline hipoteze. Kad galetume atmesti bent kelias nulines hipotezes. 
+Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
+```{r, include=TRUE, echo=TRUE}
+probes.significant <- probes[pvalues.adjusted < 0.05]
+probes.significant[1:20]
+#We choose that the adjusted p-value is "significant" if its value is below 0.05.
+```
+
+Where are these probes? What genes are they related to?
+```{r, include=TRUE, echo=TRUE}
+annotate$Gene_ID[match(probes.significant, annotate$ID)][1:20]
+annotate$CPG_ISLAND_LOCATIONS[match(probes.significant, annotate$ID)][1:20]
+#We find what genes the probes are related to and what chromosomes they are located at.
 ```
 
 ## Next steps
