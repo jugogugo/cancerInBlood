@@ -5,13 +5,13 @@ output: html_document
 ---
 # Authors
 - Edgaras Legus
-- Vitalija Misiukonytė
-- Brigita Ižganaitytė
-- Gabrielė Dilytė
-- Dalia Masilionytė
-- Reda Vaisėtaitė
-- Paulius Matijošaitis
-- Dovilė Patiejūnaitė
+- Vitalija Misiukonyte
+- Brigita Izganaityte
+- Gabriele Dilyte
+- Dalia Masilionyte
+- Reda Vaisetaite
+- Paulius Matijosaitis
+- Dovile Patiejunaite
 
 # Analysis
 ## Step 2
@@ -93,7 +93,7 @@ Plot the distribution of p values. What is the expected distribution? How dows i
 
 ```{r, include=TRUE, echo=TRUE}
 #The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values.
-#The “depth” of the histogram on the right side shows the values that are null.
+#The "depth" of the histogram on the right side shows the values that are null.
 hist(pvalues, col = "green", breaks = 100)
 ```
 
@@ -106,14 +106,64 @@ Performance-wise, how long will it take to compute the test for all probes?
 
 What is multiple hypothesis testing?
 ```{r, include=TRUE, echo=TRUE}
-#Kitaip jie dar gali būti vadinami “p-hacking”. Tai statistinių metodų naudojimas tam, kad išgauti geresnius, reikšmingesnius rezultatus. 
-#Yra eksperimentų, kurių duomenyse yra didelis kintamųjų skaičius. Tokie didelio našumo eksperimetai atliekami genetikoje ir image analysis. 
+#Kitaip jie dar gali buti vadinami "p-hacking". Tai statistiniu metodu naudojimas tam, kad isgauti geresnius, reiksmingesnius rezultatus. 
+#Yra eksperimentu, kuriu duomenyse yra didelis kintamuju skaicius. Tokie didelio nasumo eksperimetai atliekami genetikoje ir image analysis. 
 
-#Į šį testavimo būdą įeina:
-#1) skirtumai tarp nulinės ir alternatyvios hipotezės
-#2) reikšmingumo lygiai
+#I si testavimo buda ieina:
+#1) skirtumai tarp nulines ir alternatyvios hipotezes
+#2) reiksmingumo lygiai
 #3) Type I and Type II errors
 #4)p-values
 
-#Atliekant multiple hypothesis testing mes tikriname individualiai kiekvieną nulinę hipotezę. Kad galėtume atmesti bent kelias nulines hipotezes. 
+#Atliekant multiple hypothesis testing mes tikriname individualiai kiekviena nuline hipoteze. Kad galetume atmesti bent kelias nulines hipotezes. 
+```
+
+## Next steps
+
+Normalizavimas
+```{r, include=TRUE, echo=TRUE}
+#Normalizuojame beta verciu matrica deka normalizeBetweenArrays metodo.
+library("limma")
+normalizedMatrix <- normalizeBetweenArrays(betaValueMatrix)
+```
+
+Gauti rezultatai is https://dnamage.genetics.ucla.edu
+```{r, include=TRUE, echo=TRUE}
+#Pasileidziame gauta csv faila ir extractiname reikalingus stulpelius, kuriuos pridedame prie sickness
+researchColumns <- read.csv('GSE30229.csv')
+age_and_gender <- researchColumns[,c("DNAmAge","predictedGender")]
+age_gender_matrix <- data.matrix(age_and_gender)
+age_gender_matrix[which(age_gender_matrix[,2] == 2),2] <- "male"
+age_gender_matrix
+age_gender_matrix[which(age_gender_matrix[,2] == 1),2] <- "female"
+age_gender_matrix
+full_sickness <- cbind(sickness, age_gender_matrix)
+```
+
+Lytiniu chromosomu probu atmetimas
+```{r, include=TRUE, echo=TRUE}
+#Gauname X ir Y chromosomu indeksus anotacijos faile tam kad juos pasalinti. 
+#Taip pat pasaliname lytines chromosomas ir normalizuotoje matricoje.
+X_and_Y_indexes <- which(annotate$Chr == 'X' | annotate$Chr == 'Y')
+annotate_without_genderCh <- annotate[-(X_and_Y_indexes),]
+normalizedMatrix_without_genderCh <- normalizedMatrix[-(X_and_Y_indexes),]
+```
+
+PCA
+```{r, include=TRUE, echo=TRUE}
+source("https://bioconductor.org/biocLite.R")
+biocLite("impute")
+library("impute")
+
+#Palyginame kaip atrodys grafikas su nepasalintomis lytinemis chromosomomis ir 
+#kaip atrodys grafikas su jau pasalintomis lytinemis chromosomomis. 
+x <- 1:10
+
+imputed_1 <- impute.knn(normalizedMatrix)
+pca_1 <- prcomp(t(imputed_1$data), scale=FALSE)
+pairs(pca_1$x[,1:4], col=as.factor(full_sickness$predictedGender))
+
+imputed_2 <- impute.knn(normalizedMatrix_without_genderCh)
+pca_2 <- prcomp(t(imputed_2$data), scale=FALSE)
+pairs(pca_2$x[,1:4], col=as.factor(full_sickness$predictedGender))
 ```
