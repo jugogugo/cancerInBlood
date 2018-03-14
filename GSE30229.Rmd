@@ -162,8 +162,6 @@ normalizedMatrix_without_genderCh <- normalizedMatrix[-(X_and_Y_indexes),]
 
 PCA
 ```{r, include=TRUE, echo=TRUE}
-source("https://bioconductor.org/biocLite.R")
-biocLite("impute")
 library("impute")
 
 #Palyginame kaip atrodys grafikas su nepasalintomis lytinemis chromosomomis ir 
@@ -209,9 +207,31 @@ out4 <- which(abs(pca_second$x[,4]) > 3*sd(abs(pca_second$x[,4])))
 second_outs <- unique(c(out1, out2, out3, out4))
 second_outs
 
-normalizedMatrix_without_2ndoutliers <- normalizedMatrix_without_1stoutliers[,-c(second_outs)]
-full_sickness_without_2stoutliers <- full_sickness_without_1stoutliers[-(second_outs),]
+normalizedMatrix_without_outliers <- normalizedMatrix_without_1stoutliers[,-c(second_outs)]
+full_sickness_without_outliers <- full_sickness_without_1stoutliers[-(second_outs),]
 
 #Pavaizduojame isvalytus duomenis, be outlieriu ir be lytiniu chromosomu
 pairs(pca_second$x[-second_outs,1:4])
+```
+
+Permutations
+```{r, include=TRUE, echo=TRUE}
+set.seed(123)
+groups <- sample(0:1, ncol(normalizedMatrix_without_outliers), replace = TRUE)
+expected <- numeric(100)
+for (iteration in 1:10) {
+  groupsRandom <- sample(groups)
+  pvalsRandom <- apply(normalizedMatrix_without_outliers[1:1000,],1, function(normalized_matrix_without_outliers) {lmFit(normalized_matrix_without_outliers, groupsRandom)$P.Value})
+  expected[iteration] <- mean(pvalsRandom < 0.05)
+  print(pvalsRandom)
+}
+```
+Final analysis
+```{r, include=TRUE, echo=TRUE}
+library(limma)
+age <- rnorm(ncol(normalizedMatrix_without_outliers), mean=60)
+model <- model.matrix(~ 1 + groups)
+fit <- lmFit(normalizedMatrix_without_outliers, model)
+fit <- eBayes(fit)
+topTable(fit, coef=2)
 ```
