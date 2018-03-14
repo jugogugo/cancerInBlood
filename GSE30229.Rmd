@@ -199,36 +199,39 @@ pairs(pca_first$x[-outs,1:4])
 
 
 #Dabar darom antra outlieriu salinima, pritaikom PC1, PC2, PC3, PC4 dalims.
-pca_second <- prcomp(t(normalizedMatrix_without_1stoutliers))
-out1 <- which(abs(pca_second$x[,1]) > 3*sd(abs(pca_second$x[,1])))
-out2 <- which(abs(pca_second$x[,2]) > 3*sd(abs(pca_second$x[,2])))
-out3 <- which(abs(pca_second$x[,3]) > 3*sd(abs(pca_second$x[,3])))
-out4 <- which(abs(pca_second$x[,4]) > 3*sd(abs(pca_second$x[,4])))
-second_outs <- unique(c(out1, out2, out3, out4))
-second_outs
+#pca_second <- prcomp(t(normalizedMatrix_without_1stoutliers))
+#out1 <- which(abs(pca_second$x[,1]) > 3*sd(abs(pca_second$x[,1])))
+#out2 <- which(abs(pca_second$x[,2]) > 3*sd(abs(pca_second$x[,2])))
+#out3 <- which(abs(pca_second$x[,3]) > 3*sd(abs(pca_second$x[,3])))
+#out4 <- which(abs(pca_second$x[,4]) > 3*sd(abs(pca_second$x[,4])))
+#second_outs <- unique(c(out1, out2, out3, out4))
+#second_outs
 
-normalizedMatrix_without_outliers <- normalizedMatrix_without_1stoutliers[,-c(second_outs)]
-full_sickness_without_outliers <- full_sickness_without_1stoutliers[-(second_outs),]
+#normalizedMatrix_without_outliers <- normalizedMatrix_without_1stoutliers[,-c(second_outs)]
+#full_sickness_without_outliers <- full_sickness_without_1stoutliers[-(second_outs),]
 
 #Pavaizduojame isvalytus duomenis, be outlieriu ir be lytiniu chromosomu
-pairs(pca_second$x[-second_outs,1:4])
+#pairs(pca_second$x[-second_outs,1:4])
 ```
 
 Permutations
 ```{r, include=TRUE, echo=TRUE}
 set.seed(123)
-groups <- sample(0:1, ncol(normalizedMatrix_without_outliers), replace = TRUE)
+groups <- sample(c(0,1), ncol(normalizedMatrix_without_1stoutliers), replace = TRUE)
 expected <- numeric(100)
-for (iteration in 1:10) {
+for (iteration in 1:2) {
   groupsRandom <- sample(groups)
-  pvalsRandom <- apply(normalizedMatrix_without_outliers[1:1000,],1, function(normalized_matrix_without_outliers) {lmFit(normalized_matrix_without_outliers, groupsRandom)$P.Value})
-  expected[iteration] <- mean(pvalsRandom < 0.05)
-  print(pvalsRandom)
+  #pvalsRandom <- apply(normalizedMatrix_without_outliers[1:1000,],1, function(normalized_matrix_without_outliers) {lmFit(normalized_matrix_without_outliers, groupsRandom)$P.Value})
+  #expected[iteration] <- mean(pvalsRandom < 0.05)
+  #print(pvalsRandom)
+  model <- model.matrix(~ 1 + groupsRandom)
+  fit <- lmFit(normalizedMatrix_without_1stoutliers, model)
+  fit <- eBayes(fit)
+  print(mean(fit$p.value < 0.05))
 }
 ```
 Final analysis
 ```{r, include=TRUE, echo=TRUE}
-library(limma)
 age <- rnorm(ncol(normalizedMatrix_without_outliers), mean=60)
 model <- model.matrix(~ 1 + groups)
 fit <- lmFit(normalizedMatrix_without_outliers, model)
