@@ -5,23 +5,23 @@ output: html_document
 ---
 # Authors
 - Edgaras Legus
-- Vitalija Misiukonytė
-- Brigita Ižganaitytė
-- Gabrielė Dilytė
-- Dalia Masilionytė
-- Reda Vaisėtaitė
-- Paulius Matijošaitis
-- Dovilė Patiejūnaitė
+- Vitalija Misiukonyte
+- Brigita Izganaityte
+- Gabriele Dilyte
+- Dalia Masilionyte
+- Reda Vaisetaite
+- Paulius Matijosaitis
+- Dovile Patiejunaite
 
 # Analysis
 ## Step 2
-Downloading the data using GEO 
+- Downloading the data using GEO 
 ```{r, include=TRUE, echo=TRUE}
 library(GEOquery)
 GSE30229 <- getGEO("GSE30229", destdir = "./")
 ```
 
-Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
+- Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
 
 ```{r, include=TRUE, echo=TRUE}
 betaValueMatrix <- exprs(GSE30229[[1]])
@@ -29,7 +29,7 @@ head(rownames(betaValueMatrix))
 head(colnames(betaValueMatrix))
 ```
 
-Counting samples and probes in our data
+- Counting samples and probes in our data
 ```{r, include=TRUE, echo=TRUE}
 samples <- colnames(betaValueMatrix)
 probes <- rownames(betaValueMatrix)
@@ -37,17 +37,17 @@ length(samples)
 length(probes)
 ```
 
-Distribution of beta values
+- Distribution of beta values
 ```{r, include=TRUE, echo=TRUE}
 hist(betaValueMatrix, breaks=1000, xlab = "Beta Value ", border = "green", main = "Beta value distribution")
 ```
 
-Names of probes
+- Names of probes
 ```{r, include=TRUE, echo=TRUE}
 head(rownames(betaValueMatrix))
 ```
 
-Annotation that tells the coordinate (in hg19) of each probe and its genomic features
+- Annotation that tells the coordinate (in hg19) of each probe and its genomic features
 ```{r, include=TRUE, echo=TRUE}
 annotate <- getGEO("GPL8490", destdir = "./")
 annotate <- Table(annotate)
@@ -65,7 +65,7 @@ stopifnot(all(rownames(betaValueMatrix) == annotate$ID))
 head(annotate)
 ```
 
-Samples which correspond to healthy individuals, and which samples correspond to the sick ones
+- Samples which correspond to healthy individuals, and which samples correspond to the sick ones
 ```{r, include=TRUE, echo=TRUE}
 sickness <- pData(phenoData(GSE30229[[1]]))
 sickness[1:20,1]
@@ -73,7 +73,7 @@ sickness[1:20,1]
 
 ## Step 3
 
-For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+- For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
 
 ```{r, include=TRUE, echo=TRUE}
 controlSamples <- which(sickness$`disease:ch1` == 'control')
@@ -81,7 +81,7 @@ caseSamples <- which(sickness$`disease:ch1` == 'HNSCC case')
 t.test(betaValueMatrix[1,controlSamples], betaValueMatrix[1,caseSamples])
 ```
 
-From the t-test, obtain the p value.
+- From the t-test, obtain the p value.
 ```{r, include=TRUE, echo=TRUE}
 pvalues = c()
 for (i in 1:length(rownames(betaValueMatrix))) {
@@ -89,31 +89,148 @@ for (i in 1:length(rownames(betaValueMatrix))) {
      
 }
 ```
-Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+- Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
 
+The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values. The "depth" of the histogram on the right side shows the values that are null.
 ```{r, include=TRUE, echo=TRUE}
-#The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values.
-#The “depth” of the histogram on the right side shows the values that are null.
 hist(pvalues, col = "green", breaks = 100)
 ```
 
-Performance-wise, how long will it take to compute the test for all probes?
-```{r, include=TRUE, echo=TRUE}
-# We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests
-```
+- Performance-wise, how long will it take to compute the test for all probes?
+
+We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests.
+
 
 ## Step 4
 
-What is multiple hypothesis testing?
+- What is multiple hypothesis testing?
+
+Multiple hypothesis testing occures when we have many different hypotheses and we want to test whether all null hypotheses are true using a single test. Testing them simultaneously increases the chance of getting more "significant" results. #Adjustion for multiple hypothesis testing reduces the chances by increasing the needed "significance".
+
+- How should we adjust for multiple hypothesis testing in our case?
+
+For adjustion we chose "BH" method because it controls the proportion of false discovery which is expected among the rejected hypotheses.
 ```{r, include=TRUE, echo=TRUE}
-#Kitaip jie dar gali būti vadinami “p-hacking”. Tai statistinių metodų naudojimas tam, kad išgauti geresnius, reikšmingesnius rezultatus. 
-#Yra eksperimentų, kurių duomenyse yra didelis kintamųjų skaičius. Tokie didelio našumo eksperimetai atliekami genetikoje ir image analysis. 
+pvalues.adjusted <- p.adjust(pvalues, method="BH", n = length(pvalues))
+```
 
-#Į šį testavimo būdą įeina:
-#1) skirtumai tarp nulinės ir alternatyvios hipotezės
-#2) reikšmingumo lygiai
-#3) Type I and Type II errors
-#4)p-values
+- Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 
-#Atliekant multiple hypothesis testing mes tikriname individualiai kiekvieną nulinę hipotezę. Kad galėtume atmesti bent kelias nulines hipotezes. 
+We choose that the adjusted p-value is "significant" if its value is below 0.05.
+```{r, include=TRUE, echo=TRUE}
+probes.significant <- probes[pvalues.adjusted < 0.05]
+probes.significant[1:20]
+```
+
+- Where are these probes? What genes are they related to?
+
+We find what genes the probes are related to and what chromosomes they are located at.
+```{r, include=TRUE, echo=TRUE}
+annotate$Gene_ID[match(probes.significant, annotate$ID)][1:20]
+annotate$CPG_ISLAND_LOCATIONS[match(probes.significant, annotate$ID)][1:20]
+```
+
+## Next steps
+
+- Normalizavimas
+
+Normalizuojame beta verciu matrica deka normalizeBetweenArrays metodo.
+```{r, include=TRUE, echo=TRUE}
+library("limma")
+normalizedMatrix <- normalizeBetweenArrays(betaValueMatrix)
+```
+
+- Gauti rezultatai is https://dnamage.genetics.ucla.edu
+
+Pasileidziame gauta csv faila ir extractiname reikalingus stulpelius, kuriuos pridedame prie sickness
+```{r, include=TRUE, echo=TRUE}
+researchColumns <- read.csv('GSE30229.csv')
+age_and_gender <- researchColumns[,c("DNAmAge","predictedGender")]
+age_gender_columns <- data.frame(age_and_gender)
+sickness <- cbind(sickness, age_gender_columns)
+```
+
+- Lytiniu chromosomu probu atmetimas
+
+Gauname X ir Y chromosomu indeksus anotacijos faile tam kad juos pasalinti. Taip pat pasaliname lytines chromosomas ir normalizuotoje matricoje.
+```{r, include=TRUE, echo=TRUE}
+X_and_Y_indexes <- which(annotate$Chr == 'X' | annotate$Chr == 'Y')
+annotate_without_genderCh <- annotate[-(X_and_Y_indexes),]
+normalizedMatrix_without_genderCh <- normalizedMatrix[-(X_and_Y_indexes),]
+```
+
+- PCA
+
+Palyginame kaip atrodys grafikas su nepasalintomis lytinemis chromosomomis ir kaip atrodys grafikas su jau pasalintomis lytinemis chromosomomis.
+```{r, include=TRUE, echo=TRUE}
+library("impute")
+
+x <- 1:10
+
+imputed_1 <- impute.knn(normalizedMatrix)
+pca_1 <- prcomp(t(imputed_1$data), scale=FALSE)
+pairs(pca_1$x[,1:4], col=as.factor(sickness$predictedGender))
+
+imputed_2 <- impute.knn(normalizedMatrix_without_genderCh)
+pca_2 <- prcomp(t(imputed_2$data), scale=FALSE)
+pairs(pca_2$x[,1:4], col=as.factor(sickness$predictedGender))
+```
+- Outliers
+
+Dar karta pavaizduojame grafika be lytiniu chromosomu
+```{r, include=TRUE, echo=TRUE}
+normalizedMatrix_without_genderCh <- impute.knn(normalizedMatrix_without_genderCh)$data
+pca_first <- prcomp(t(normalizedMatrix_without_genderCh))
+pairs(pca_first$x[,1:4], col=as.factor(sickness$predictedGender))
+```
+
+Identifikuojame outliers po pairs grafiko analizes, taikome PC1 ir PC2 dalims, vyksta pirmasis outlieriu salinimas.
+```{r, include=TRUE, echo=TRUE}
+out1 <- which(abs(pca_first$x[,1]) > 3*sd(abs(pca_first$x[,1])))
+out2 <- which(abs(pca_first$x[,2]) > 3*sd(abs(pca_first$x[,2])))
+outs <- unique(c(out1, out2))
+outs
+```
+
+Ismetame meginius, karpome eilutes is full_sickness ir stulpelius is normalizedMatrix_without_genderCh
+```{r, include=TRUE, echo=TRUE}
+normalizedMatrix_without_outliers <- normalizedMatrix_without_genderCh[,-c(outs)]
+sickness_without_outliers <- sickness[-(outs),]
+```
+
+Pavaizduojame grafika be outlieriu
+```{r, include=TRUE, echo=TRUE}
+pairs(pca_first$x[-outs,1:4])
+```
+
+- Permutations
+```{r, include=TRUE, echo=TRUE}
+set.seed(123)
+gender <- c('male','female')
+groups <- sample(as.factor(gender),
+ncol(normalizedMatrix_without_outliers), replace = TRUE)
+expected <- numeric(100)
+means <- vector()
+for (iteration in 1:100) {
+  groupsRandom <- sample(groups)
+  #pvalsRandom <- apply(normalizedMatrix_without_outliers[1:1000,],1, function(normalized_matrix_without_outliers) {lmFit(normalized_matrix_without_outliers, groupsRandom)$P.Value})
+  #expected[iteration] <- mean(pvalsRandom < 0.05)
+  #print(pvalsRandom)
+  model <- model.matrix(~ 1 + groupsRandom)
+  fit <- lmFit(normalizedMatrix_without_outliers, model)
+  fit <- eBayes(fit)
+  means[iteration] <- (mean(fit$p.value < 0.05))
+}
+
+```
+- Final analysis
+```{r, include=TRUE, echo=TRUE}
+age <- rnorm(ncol(normalizedMatrix_without_outliers), mean=60)
+model <- model.matrix(~ 1 + groups)
+fit <- lmFit(normalizedMatrix_without_outliers, model)
+fit <- eBayes(fit)
+topTable(fit, coef=2)
+meann <- mean(fit$p.value<0.05)
+plot(means, type='l')
+abline(h=meann, col='red')
 ```
