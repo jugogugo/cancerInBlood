@@ -72,6 +72,21 @@ commonProbes <- intersect(annotation$ID, rownames(matrix))
 Number of probes for which hg19 annotation is available: `r length(commonProbes)`
 
 
+- Cell count estimates
+```{r}
+fname <- "GSE50409_cellCounts.csv"
+if (!file.exists) {
+	require(meffil)
+	estimates <- meffil.estimate.cell.counts.from.betas(matrix, 
+		cell.type.reference="blood gse35069", verbose = TRUE)
+	write.csv(estimates, file=fname, row.names=TRUE)	
+}
+estimates <- read.csv(fname)
+head(estimates)
+```
+
+
+
 ```{r}
 
 i <- match(commonProbes, annotation$ID)
