@@ -177,7 +177,7 @@ pca <- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(ageSex$predictedGender))
 ```
 - Some samples could be outliers messing up our results. How to detect outliers?
-
+Outlier'iai yra surandami iš pca x reikšmių atėmus vidurkius ir paėmus gauto skaičiaus modulį. Jį palyginame su standartiniu nuokrypiu padaugintu iš 3. Jeigu mūsų gautas skaičius yra didesnis negu standartinis nuokrypis padaugintas iš 3, laikome šį tašką outlieriu. 
 ```{r}
 out1 <- abs(pca$x[,1] - mean(pca$x[,1])) > 3*sd(pca$x[,1])
 out2 <- abs(pca$x[,2] - mean(pca$x[,2])) > 3*sd(pca$x[,2])
@@ -187,6 +187,7 @@ outs <- which(out1 | out2)
 ```{r}
 normalized <- normalizeBetweenArrays(matrix[-sexProbes, -outs])
 ```
+Atvaizduojame normalizuotą matricą, panaikinus outlierių taškus, bei lytinių chromosomų probus.
 ```{r}
 imputed <- impute.knn(normalized)
 pca <- prcomp(t(imputed$data), scale=FALSE)
@@ -221,8 +222,10 @@ computeFit <- function(permute = FALSE) {
 }
 
 fit <- computeFit()
+```
+```{r out.width = '100%'}
 #Histogram of p-values
-hist(fit$P.Value, breaks=100)
+hist(fit$P.Value, breaks=1000)
 ```
 - Permutations
 ```{r}
@@ -246,6 +249,8 @@ i <- which(res$adj.P.Val < 0.05)
 res <- res[i,]
 o <- order(res$P.Value)
 res <- res[o,]
+```
+```{r out.width = '25%'}
 datatable(res, class = 'cell-border stripe')
 ```
 =======
