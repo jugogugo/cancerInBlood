@@ -75,7 +75,7 @@ Number of probes for which hg19 annotation is available: `r length(commonProbes)
 - Cell count estimates
 ```{r}
 fname <- "GSE50409_cellCounts.csv"
-if (!file.exists) {
+if (!file.exists(fname)) {
 	require(meffil)
 	estimates <- meffil.estimate.cell.counts.from.betas(matrix, 
 		cell.type.reference="blood gse35069", verbose = TRUE)

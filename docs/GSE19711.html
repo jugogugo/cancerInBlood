@@ -353,6 +353,115 @@ disease[1:20,1]</code></pre>
 ## [17] Peripheral Whole Blood 114766 Peripheral Whole Blood 109691
 ## [19] Peripheral Whole Blood 119821 Peripheral Whole Blood 113049
 ## 540 Levels: Peripheral Whole Blood 100097 ... Peripheral Whole Blood 123698</code></pre>
+<ul>
+<li>Cell count estimates</li>
+</ul>
+<pre class="r"><code>fname &lt;- &quot;GSE19711_cellCounts.csv&quot;
+if (!file.exists(fname)) {
+  require(meffil)
+  estimates &lt;- meffil.estimate.cell.counts.from.betas(gsetexpr, 
+    cell.type.reference=&quot;blood gse35069&quot;, verbose = TRUE)
+  write.csv(estimates, file=fname, row.names=TRUE)  
+}</code></pre>
+<pre><code>## Loading required package: meffil</code></pre>
+<pre><code>## Loading required package: illuminaio</code></pre>
+<pre><code>## Warning: package &#39;illuminaio&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: MASS</code></pre>
+<pre><code>## Warning: package &#39;MASS&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: limma</code></pre>
+<pre><code>## Warning: package &#39;limma&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## 
+## Attaching package: &#39;limma&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:BiocGenerics&#39;:
+## 
+##     plotMA</code></pre>
+<pre><code>## Loading required package: sva</code></pre>
+<pre><code>## Warning: package &#39;sva&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: mgcv</code></pre>
+<pre><code>## Warning: package &#39;mgcv&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: nlme</code></pre>
+<pre><code>## Warning: package &#39;nlme&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## This is mgcv 1.8-23. For overview type &#39;help(&quot;mgcv-package&quot;)&#39;.</code></pre>
+<pre><code>## Loading required package: genefilter</code></pre>
+<pre><code>## Warning: package &#39;genefilter&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;genefilter&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:MASS&#39;:
+## 
+##     area</code></pre>
+<pre><code>## Loading required package: BiocParallel</code></pre>
+<pre><code>## Warning: package &#39;BiocParallel&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## Loading required package: plyr</code></pre>
+<pre><code>## Loading required package: reshape2</code></pre>
+<pre><code>## Warning: package &#39;reshape2&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: knitr</code></pre>
+<pre><code>## Warning: package &#39;knitr&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: Cairo</code></pre>
+<pre><code>## Loading required package: gridExtra</code></pre>
+<pre><code>## 
+## Attaching package: &#39;gridExtra&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:Biobase&#39;:
+## 
+##     combine</code></pre>
+<pre><code>## The following object is masked from &#39;package:BiocGenerics&#39;:
+## 
+##     combine</code></pre>
+<pre><code>## Loading required package: markdown</code></pre>
+<pre><code>## Loading required package: matrixStats</code></pre>
+<pre><code>## Warning: package &#39;matrixStats&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## 
+## Attaching package: &#39;matrixStats&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:plyr&#39;:
+## 
+##     count</code></pre>
+<pre><code>## The following objects are masked from &#39;package:genefilter&#39;:
+## 
+##     rowSds, rowVars</code></pre>
+<pre><code>## The following objects are masked from &#39;package:Biobase&#39;:
+## 
+##     anyMissing, rowMedians</code></pre>
+<pre><code>## Loading required package: multcomp</code></pre>
+<pre><code>## Warning: package &#39;multcomp&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: mvtnorm</code></pre>
+<pre><code>## Warning: package &#39;mvtnorm&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: survival</code></pre>
+<pre><code>## Loading required package: TH.data</code></pre>
+<pre><code>## 
+## Attaching package: &#39;TH.data&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:MASS&#39;:
+## 
+##     geyser</code></pre>
+<pre><code>## Loading required package: lme4</code></pre>
+<pre><code>## Warning: package &#39;lme4&#39; was built under R version 3.4.3</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## Warning: package &#39;Matrix&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lme4&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:nlme&#39;:
+## 
+##     lmList</code></pre>
+<pre><code>## Loading required package: fastICA</code></pre>
+<pre><code>## Loading required package: DNAcopy</code></pre>
+<pre><code>## Warning: package &#39;DNAcopy&#39; was built under R version 3.4.2</code></pre>
+<pre><code>## Loading required package: quadprog</code></pre>
+<pre><code>## Loading required package: statmod</code></pre>
+<pre class="r"><code>estimates &lt;- read.csv(fname)
+head(estimates)</code></pre>
+<pre><code>##           X         Bcell      CD4T          CD8T      Gran      Mono
+## 1 GSM491937  0.000000e+00 0.3436418 -4.314231e-17 0.5640887 0.2385841
+## 2 GSM491938  0.000000e+00 0.3637580 -3.478880e-17 0.3803222 0.2910747
+## 3 GSM491939  0.000000e+00 0.4086299 -4.149844e-17 0.4382775 0.2788429
+## 4 GSM491940  2.775558e-17 0.4041456 -4.588442e-17 0.4013604 0.2954427
+## 5 GSM491941  0.000000e+00 0.3513154 -4.029153e-17 0.5087325 0.2759206
+## 6 GSM491942 -2.775558e-17 0.4300670 -3.290091e-17 0.3946998 0.3057079
+##          NK
+## 1 0.1540291
+## 2 0.2504209
+## 3 0.1628184
+## 4 0.1926206
+## 5 0.1603501
+## 6 0.1616756</code></pre>
 <p>For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.</p>
 <pre class="r"><code>pvalarray = array()
 namearray = array()
@@ -366,7 +475,7 @@ for (i in 1:length(probeset)){
 }</code></pre>
 <p>Plot the distribution of p values. What is the expected distribution? How does it differ from what you get? We get Anti-conservative p-values. All null p-values form a flat distribution. Peak is close to 0 - that is where the alternative hypotheses are. Not all p-values less than .05 are significant. High p-values indicate false negatives - hypotheses that are not detectable with our test. The left of the histogram shows significance. The right side shows how many p-values are null.</p>
 <pre class="r"><code>hist(pvalarray, breaks = 100)</code></pre>
-<p><img src="GSE19711_files/figure-html/unnamed-chunk-10-1.png" width="672" /> Performance-wise, how long will it take to compute the test for all probes? Result is 51.228 seconds.</p>
+<p><img src="GSE19711_files/figure-html/unnamed-chunk-11-1.png" width="672" /> Performance-wise, how long will it take to compute the test for all probes? Result is 51.228 seconds.</p>
 <pre class="r"><code>system.time( for (i in 1:length(probeset)){
   case = gsetexpr[i, grep(&quot;Case&quot;, disease$`sample type:ch1`)]
   control = gsetexpr[i, grep(&quot;Control&quot;, disease$`sample type:ch1`)]
@@ -374,7 +483,7 @@ for (i in 1:length(probeset)){
   pvalarray[i] = tt$p.value
 })</code></pre>
 <pre><code>##    user  system elapsed 
-##  38.645   0.300  39.240</code></pre>
+##  40.510   0.299  41.092</code></pre>
 <p>-What is multiple hypothesis testing? Such testing means that we are trying to check validity of a number of hypotheses simultaneausly. However, as the number of hypotheses increases, o does the chance for observing at least one significant result by chance. In order to reduce the impact of this isssue, it is important to adjust for multiple hypothesis testing, so observing a significant result by chance is below our chosen significance level.</p>
 <p>-How should we adjust for multiple hypothesis testing in our case?</p>
 <pre class="r"><code>pvalarray.adjusted &lt;- p.adjust(pvalarray, method=&quot;BH&quot;, n = length(pvalarray))</code></pre>
@@ -420,8 +529,9 @@ genes [1:20]</code></pre>
 <pre><code>## Installing package(s) &#39;impute&#39;</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/qs/dgv7jfw116ndln1lsm34567c0000gn/T//RtmpCbuAIm/downloaded_packages</code></pre>
-<pre><code>## Old packages: &#39;RankAggreg&#39;, &#39;Rcpp&#39;, &#39;bindr&#39;, &#39;hms&#39;, &#39;stringi&#39;, &#39;yaml&#39;</code></pre>
+##  /var/folders/qs/dgv7jfw116ndln1lsm34567c0000gn/T//Rtmp6Sedvi/downloaded_packages</code></pre>
+<pre><code>## Old packages: &#39;RankAggreg&#39;, &#39;Rcpp&#39;, &#39;bindr&#39;, &#39;hms&#39;, &#39;stringi&#39;, &#39;withr&#39;,
+##   &#39;yaml&#39;</code></pre>
 <pre class="r"><code>library(impute)</code></pre>
 <pre><code>## Warning: package &#39;impute&#39; was built under R version 3.4.2</code></pre>
 <p>Some samples could be outliers messing up our results. How to detect outliers?</p>
@@ -512,25 +622,19 @@ genes [1:20]</code></pre>
 x &lt;- 1:10
 y &lt;- (pca$sdev  / sum(pca$sdev))[1:10]
 plot(x, y, type=&#39;h&#39;)</code></pre>
-<p><img src="GSE19711_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p><img src="GSE19711_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
 <pre class="r"><code>groups &lt;- sample(0:1, ncol(gsetexpr), replace = TRUE)
 pairs(pca$x[, 1:3], col=as.factor(groups))</code></pre>
-<p><img src="GSE19711_files/figure-html/unnamed-chunk-16-2.png" width="672" /></p>
+<p><img src="GSE19711_files/figure-html/unnamed-chunk-17-2.png" width="672" /></p>
 <pre class="r"><code>table(annotation$CHR)</code></pre>
 <pre><code>## &lt; table of extent 0 &gt;</code></pre>
 <pre class="r"><code>d &lt;- dist(pca$x[, 1:5])
 h &lt;- hclust(d, method=&quot;average&quot;)
 plot(h)</code></pre>
-<p><img src="GSE19711_files/figure-html/unnamed-chunk-16-3.png" width="672" /></p>
+<p><img src="GSE19711_files/figure-html/unnamed-chunk-17-3.png" width="672" /></p>
 <p>Thousands of t-tests can be computed at once within seconds. How? limma</p>
-<pre class="r"><code>library(limma)</code></pre>
-<pre><code>## Warning: package &#39;limma&#39; was built under R version 3.4.3</code></pre>
-<pre><code>## 
-## Attaching package: &#39;limma&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:BiocGenerics&#39;:
-## 
-##     plotMA</code></pre>
-<pre class="r"><code>age &lt;- rnorm(ncol(gsetexpr), mean=60)
+<pre class="r"><code>library(limma)
+age &lt;- rnorm(ncol(gsetexpr), mean=60)
 model &lt;- model.matrix(~ 1 + groups + age)
 fit &lt;- lmFit(gsetexpr, model)
 fit &lt;- eBayes(fit)

@@ -61,6 +61,22 @@ head(annotation)
 disease = pData(phenoData(gset[[1]]))
 disease[1:20,1]
 ```
+
+- Cell count estimates
+```{r}
+fname <- "GSE19711_cellCounts.csv"
+if (!file.exists(fname)) {
+  require(meffil)
+  estimates <- meffil.estimate.cell.counts.from.betas(gsetexpr, 
+    cell.type.reference="blood gse35069", verbose = TRUE)
+  write.csv(estimates, file=fname, row.names=TRUE)  
+}
+estimates <- read.csv(fname)
+head(estimates)
+```
+
+
+
 For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
 ```{r}
 pvalarray = array()

@@ -395,6 +395,32 @@ table(group)</code></pre>
 <pre><code>## group
 ##   HNSCC control 
 ##      92      92</code></pre>
+<ul>
+<li>Cell count estimates</li>
+</ul>
+<pre class="r"><code>fname &lt;- &quot;GSE30229_cellCounts.csv&quot;
+if (!file.exists(fname)) {
+    require(meffil)
+    estimates &lt;- meffil.estimate.cell.counts.from.betas(betaValueMatrix, 
+        cell.type.reference=&quot;blood gse35069&quot;, verbose = TRUE)
+    write.csv(estimates, file=fname, row.names=TRUE)    
+}
+estimates &lt;- read.csv(fname)
+head(estimates)</code></pre>
+<pre><code>##           X         Bcell      CD4T          CD8T      Gran      Mono
+## 1 GSM748577  0.000000e+00 0.4259437 -3.664016e-17 0.3688712 0.3198284
+## 2 GSM748578  0.000000e+00 0.4068637 -4.483240e-17 0.4346332 0.2995232
+## 3 GSM748579 -2.775558e-17 0.4171323 -4.033162e-17 0.3941261 0.3185657
+## 4 GSM748580  0.000000e+00 0.2906762 -3.119086e-17 0.4335323 0.3639560
+## 5 GSM748581 -2.775558e-17 0.3864811 -4.333882e-17 0.4389111 0.3073313
+## 6 GSM748582  0.000000e+00 0.4100746 -4.377051e-17 0.4048615 0.3197167
+##          NK
+## 1 0.1795744
+## 2 0.1572672
+## 3 0.1671615
+## 4 0.2215857
+## 5 0.1706396
+## 6 0.1653897</code></pre>
 </div>
 <div id="step-3" class="section level2">
 <h2>Step 3</h2>
@@ -437,13 +463,13 @@ timing &lt;- system.time( { fit &lt;- computeFit() } )</code></pre>
 </ul>
 <p>The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values. The “depth” of the histogram on the right side shows the values that are null.</p>
 <pre class="r"><code>hist(fit$P.Value, col = &quot;green&quot;, breaks = 100)</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
 <ul>
 <li>Performance-wise, how long will it take to compute the test for all probes?</li>
 </ul>
 <pre class="r"><code>timing</code></pre>
 <pre><code>##    user  system elapsed 
-##   3.128   0.204   3.371</code></pre>
+##   3.635   0.219   3.950</code></pre>
 </div>
 <div id="step-4" class="section level2">
 <h2>Step 4</h2>
@@ -562,7 +588,7 @@ head(dnamEstimates)</code></pre>
 ## 6 6 GSM748582 48.07722            male control</code></pre>
 <p>Distribution of DNAmAge across sample groups:</p>
 <pre class="r"><code>with(dnamEstimates, boxplot(DNAmAge ~ Group))</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <pre class="r"><code>with(dnamEstimates, t.test(DNAmAge ~ Group))</code></pre>
 <pre><code>## 
 ##  Welch Two Sample t-test
@@ -581,7 +607,7 @@ head(dnamEstimates)</code></pre>
 <p>Let’s look into the PCs of the data as it is</p>
 <pre class="r"><code>pca &lt;- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender))</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
 <p>PCs are heavily influenced by sex. We can test if other parameters are related to any of the PCs.</p>
 <pre class="r"><code>model &lt;- model.matrix(~ Group + predictedGender + DNAmAge, data=dnamEstimates)
 fit &lt;- lmFit(t(pca$x[, 1:10]), model)
@@ -637,7 +663,7 @@ topTable(fit)</code></pre>
 <p>Perform PCA again</p>
 <pre class="r"><code>pca &lt;- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender))</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
 <ul>
 <li>There are some obvious outliers that should be removed before we proceed.</li>
 </ul>
@@ -665,7 +691,7 @@ outs &lt;- which(out1 | out2)</code></pre>
 <p>Now, we can run PCA</p>
 <pre class="r"><code>pca &lt;- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender[-outs]))</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
 <p>And test which PCs are influenced by known variables</p>
 <pre class="r"><code>model &lt;- model.matrix(~ Group + predictedGender + DNAmAge, data=dnamEstimates[-outs,])
 fit &lt;- lmFit(t(pca$x[, 1:10]), model)
@@ -709,9 +735,9 @@ topTable(fit)</code></pre>
 ## PC10           0            0                   0       0</code></pre>
 <p>This time, the first and third principal components are related to differences between groups. Let’s visualize.</p>
 <pre class="r"><code>plot(pca$x[,1], pca$x[,3], col=as.factor(dnamEstimates$Group[-outs]))</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
-<pre class="r"><code>boxplot(pca$x[,1] ~ as.factor(dnamEstimates$Group[-outs]))</code></pre>
 <p><img src="GSE30229_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<pre class="r"><code>boxplot(pca$x[,1] ~ as.factor(dnamEstimates$Group[-outs]))</code></pre>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
 <p>This is advanced stuff. We are going to fit two generalized (binomial) linear models, i.e. models that explain a binary variable based on numeric input. The first model uses PC1, PC3 and DNAmAge. The second, or the null, model uses only DNAmAge to explain the outcome (healthy/control). Then we use ANOVA to test whether the two tests are significantly different. Under null hypothesis, the two tests are the same and, therefore, the PC1 and PC3 bear no additional information when predicting diagnosis. Under alternative hypothesis, the two PCs improve our predictive power.</p>
 <pre class="r"><code>model &lt;- glm(as.factor(Group) ~ pca$x[,1] + pca$x[,3] + DNAmAge, data=dnamEstimates[-outs,], family=&quot;binomial&quot;)
 model0 &lt;- glm(as.factor(Group) ~ DNAmAge, data=dnamEstimates[-outs,], family=&quot;binomial&quot;)
@@ -748,7 +774,7 @@ computeFit &lt;- function(permute = FALSE) {
 fit &lt;- computeFit()</code></pre>
 <p>Histogram of P values</p>
 <pre class="r"><code>hist(fit$P.Value, breaks=100)</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
 <p>Number of significant probes</p>
 <pre class="r"><code>cat(&quot;Fraction with p &lt; 0.05 &quot;, mean(fit$P.Value &lt; 0.05), &quot;\n&quot;)</code></pre>
 <pre><code>## Fraction with p &lt; 0.05  0.1753757</code></pre>
@@ -769,7 +795,7 @@ observed &lt;- mean(fit$P.Value &lt; 0.05)
 <pre class="r"><code>p &lt;- mean(expected &gt; observed)
 hist(expected, breaks=20, main=paste(&quot;The test p =&quot;, p))
 abline(v=observed, col=&quot;red&quot;)</code></pre>
-<p><img src="GSE30229_files/figure-html/unnamed-chunk-37-1.png" width="672" /></p>
+<p><img src="GSE30229_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
 </div>
 <div id="final-list-of-significant-probes" class="section level3">
 <h3>Final list of significant probes</h3>

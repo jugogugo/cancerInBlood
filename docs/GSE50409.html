@@ -265,6 +265,25 @@ length(samplesNames)</code></pre>
 # Now match the rows in annotation that are present in our data
 commonProbes &lt;- intersect(annotation$ID, rownames(matrix))</code></pre>
 <p>Number of probes for which hg19 annotation is available: 25978</p>
+<ul>
+<li>Cell count estimates</li>
+</ul>
+<pre class="r"><code>fname &lt;- &quot;GSE50409_cellCounts.csv&quot;
+if (!file.exists(fname)) {
+    require(meffil)
+    estimates &lt;- meffil.estimate.cell.counts.from.betas(matrix, 
+        cell.type.reference=&quot;blood gse35069&quot;, verbose = TRUE)
+    write.csv(estimates, file=fname, row.names=TRUE)    
+}
+estimates &lt;- read.csv(fname)
+head(estimates)</code></pre>
+<pre><code>##            X Bcell      CD4T          CD8T      Gran      Mono        NK
+## 1 GSM1218373     0 0.4076864 -5.506905e-17 0.4267532 0.3460443 0.1172070
+## 2 GSM1218374     0 0.3716314 -4.260589e-17 0.4862468 0.3123030 0.1205184
+## 3 GSM1218375     0 0.4091981 -4.675418e-17 0.3660619 0.3565211 0.1386250
+## 4 GSM1218376     0 0.4043853 -4.907666e-17 0.3721362 0.3140641 0.1999726
+## 5 GSM1218377     0 0.4086289 -4.927294e-17 0.4012022 0.3182260 0.1541096
+## 6 GSM1218378     0 0.4085907 -4.241073e-17 0.4161691 0.3387487 0.1195684</code></pre>
 <pre class="r"><code>i &lt;- match(commonProbes, annotation$ID)
 annotation &lt;- annotation[i, ]
 
@@ -404,7 +423,7 @@ t.test(matrix[1,control], matrix[1,sick])</code></pre>
 </ul>
 <pre class="r"><code>pvals &lt;- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})
 hist(pvals)</code></pre>
-<p><img src="GSE50409_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
 <pre class="r"><code>observed &lt;- mean(pvals &lt; 0.05)
 
 
@@ -423,25 +442,25 @@ for (iteration in 1:2) {
 ## [1] 2</code></pre>
 <pre class="r"><code>hist(expected, xlim=c(0, 0.5), xlab=&quot;Expected fraction of significant probes&quot;)
 abline(v=observed, col=&quot;red&quot;)</code></pre>
-<p><img src="GSE50409_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-12-2.png" width="672" /></p>
 <pre class="r"><code>mean(observed &lt; expected)</code></pre>
 <pre><code>## [1] 0</code></pre>
 <ul>
 <li>Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?</li>
 </ul>
 <pre class="r"><code>hist(pvals, breaks = 1000)</code></pre>
-<p><img src="GSE50409_files/figure-html/unnamed-chunk-12-1.png" width="100%" /></p>
+<p><img src="GSE50409_files/figure-html/unnamed-chunk-13-1.png" width="100%" /></p>
 <pre class="r"><code>#The p-value graph should be distributed around zero. What we got appears to be the expected result, because in the graph it is clear that frequency of probes with p-value zero or very close to it is the highest, while the frequency of probes with bigger p-value plummets extremely.</code></pre>
 <ul>
 <li>Performance-wise, how long will it take to compute the test for all probes?</li>
 </ul>
 <pre class="r"><code>system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))</code></pre>
 <pre><code>##    user  system elapsed 
-##   5.248   0.145   5.445</code></pre>
+##   6.295   0.114   6.437</code></pre>
 <ul>
 <li>What is multiple hypothesis testing?</li>
 </ul>
-<pre class="r"><code># Using and manipulating statistical methods it is more likely to get “significant” data. Due to that, Type 1 Error can occur more often , when we reject correct null hypothesis.</code></pre>
+<p>Using and manipulating statistical methods it is more likely to get “significant” data. Due to that, Type 1 Error can occur more often , when we reject correct null hypothesis.</p>
 <ul>
 <li>How should we adjust for multiple hypothesis testing in our case?</li>
 </ul>
@@ -1348,8 +1367,9 @@ annotation$UCSC_CpG_Islands_Name[match(names(pvals.significant), annotation$ID)]
 <pre><code>## Installing package(s) &#39;impute&#39;</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/qs/dgv7jfw116ndln1lsm34567c0000gn/T//RtmpCbuAIm/downloaded_packages</code></pre>
-<pre><code>## Old packages: &#39;RankAggreg&#39;, &#39;Rcpp&#39;, &#39;bindr&#39;, &#39;hms&#39;, &#39;stringi&#39;, &#39;yaml&#39;</code></pre>
+##  /var/folders/qs/dgv7jfw116ndln1lsm34567c0000gn/T//Rtmp6Sedvi/downloaded_packages</code></pre>
+<pre><code>## Old packages: &#39;RankAggreg&#39;, &#39;Rcpp&#39;, &#39;bindr&#39;, &#39;hms&#39;, &#39;stringi&#39;, &#39;withr&#39;,
+##   &#39;yaml&#39;</code></pre>
 <pre class="r"><code>library(impute)
 
 imputed &lt;- impute.knn(matrix)</code></pre>
