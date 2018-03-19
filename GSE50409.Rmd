@@ -212,10 +212,18 @@ pairs(pca$x[,1:4], col=as.factor(ageSex$predictedGender))
 ```{r out.width = '100%'}
 group <- as.factor(as.character(disease$source_name_ch1))
 ageSex$Group <- group
-model <- model.matrix(~Group + predictedGender + DNAmAge, data=ageSex[-outs,])
+cellCounts <- read.csv("./GSE50409_cellCounts.csv")
+stopifnot(all(ageSex$SampleID == cellCounts$X))
+ageSex$Bcell <- cellCounts$Bcell
+ageSex$CD4T <- cellCounts$CD4T
+ageSex$CD8T <- cellCounts$CD8T
+ageSex$Gran <- cellCounts$Gran
+ageSex$Mono <- cellCounts$Mono
+ageSex$NK <- cellCounts$NK
+model <- model.matrix(~Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK , data=ageSex[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-topTable(fit)
+toptable(fit)
 decideTests(fit)
 plot(pca$x[,1], pca$x[,3], col=as.factor(ageSex$Group[-outs]))
 boxplot(pca$x[,1] ~ as.factor(ageSex$Group[-outs]))
@@ -224,11 +232,11 @@ boxplot(pca$x[,1] ~ as.factor(ageSex$Group[-outs]))
 computeFit <- function(permute = FALSE) {
 	if (!permute)
 	{
-		model <- model.matrix(~ Group + predictedGender + DNAmAge, data=ageSex[-outs,])
+		model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=ageSex[-outs,])
 	}
   else
   {
-	  model <- model.matrix(~ sample(Group) + predictedGender + DNAmAge, data=ageSex[-outs,])	
+	  model <- model.matrix(~ sample(Group) + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=ageSex[-outs,])	
 	}
 	fit <- lmFit(imputed$data, model)
 	fit <- eBayes(fit)
@@ -264,9 +272,12 @@ i <- which(res$adj.P.Val < 0.05)
 res <- res[i,]
 o <- order(res$P.Value)
 res <- res[o,]
-```
-```{r out.width = '25%'}
-datatable(res, class = 'cell-border stripe')
+datatable(res, class = 'cell-border stripe', options = list(
+  searching = TRUE,
+  pageLength = 5,
+  lengthMenu = c(5, 10, 15, 20),
+  scrollX = TRUE
+))
 ```
 =======
 
