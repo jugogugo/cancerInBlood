@@ -22,7 +22,7 @@ library(DT)
 ```
 
 -Automatically download the data from GEO
-```{r, echo=FALSE}
+```{r, include=FALSE, echo=FALSE}
 gset = getGEO("GSE19711", destdir="./")
 ```
 
@@ -157,8 +157,11 @@ data711$Group = group
 head(data711)
 with(data711, boxplot(DNAmAge ~ Group))
 with(data711, t.test(DNAmAge ~ Group))
-
+```
+```{r, include=FALSE, echo=FALSE}
 imputed <- impute.knn(normmat)
+```
+```{r, echo=FALSE}
 pca = prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 
@@ -176,7 +179,11 @@ Reikia atmesti lytiniu chromosomu probus
 
 ```{r}
 sexProbes <- which(annotation$Chr %in% c("X", "Y"))
-imputed <- impute.knn(normmat[-sexProbes,])
+```
+```{r, include=FALSE, echo=FALSE}
+imputed <- impute.knn(normmat)
+```
+```{r, echo=FALSE}
 pca <- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 ```
@@ -193,8 +200,11 @@ PCA after removal of outliers and sex chromosome probes
 
 ```{r}
 normmat = limma::normalizeBetweenArrays(gsetexpr[-sexProbes, -outs])
-
+```
+```{r, include=FALSE, echo=FALSE}
 imputed <- impute.knn(normmat)
+```
+```{r, echo=FALSE}
 pca = prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender[-outs]))
 
@@ -245,7 +255,7 @@ observed = mean(fit$P.Value < 0.05)
 ```
 Permutacijos!! (Greičiau)
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, include=FALSE}
 require(doSNOW)
 require(foreach)
 
