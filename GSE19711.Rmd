@@ -15,11 +15,15 @@ output: html_document
 # Analysis
 
 ```{r, echo=FALSE, include=FALSE}
-library(GEOquery)
+
 ```
 
 -Automatically download the data from GEO
 ```{r}
+library(GEOquery)
+library(impute)
+library(limma)
+library(DT)
 gset = getGEO("GSE19711", destdir="./")
 ```
 
@@ -58,8 +62,11 @@ head(annotation)
 
 -Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
 ```{r}
-disease = pData(phenoData(gset[[1]]))
-disease[1:20,1]
+study = pData(phenoData(gset[[1]]))
+group = study$`sample type:ch1`
+group = sapply(strsplit(as.character(group), split=" "),'[[', 8)
+group <- as.factor(group)
+table(group)
 ```
 For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
 ```{r}
@@ -140,67 +147,159 @@ We should find genes and then chromosomes (where probes are located). We do so b
 Normalizavimas, kvantiliu normalizacija
 
 ```{r}
-library(impute)
-library(limma)
-library(minfi)
 normmat = limma::normalizeBetweenArrays(gsetexpr)
 ```
-Some samples could be outliers messing up our results. How to detect outliers?
+
+PCA before removal of outliers and sex chromosome probes
 
 ```{r}
-data711 = read.csv('DnaAge.csv')
-agesampledata <- data711[,c("DNAmAge","SampleID")]
-groups <- agesampledata[2]
-dim(normmat)
-sum(is.na(normmat))
-imputed = impute.knn(normmat)
-dim(imputed$data)
-sum(is.na(imputed$data))
+data711 = read.csv('GSE19711.csv')
+data711$Group = group
+head(data711)
+with(data711, boxplot(DNAmAge ~ Group))
+with(data711, t.test(DNAmAge ~ Group))
+
+imputed <- impute.knn(normmat)
 pca = prcomp(t(imputed$data), scale=FALSE)
-head(pca$sdev / sum(pca$sdev)) #variabilumas
-x = 1:540
-y = (pca$sdev / sum(pca$sdev))
-plot(x,y, type='h')
-```
-PCA
+pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 
-```{r}
-d = dist(pca$x[,1:5])
-h = hclust(d, method="average")
-plot(h)
+
+model <- model.matrix(~ Group + DNAmAge, data = data711)
+fit <- lmFit(t(pca$x[, 1:10]), model)
+fit <- eBayes(fit)
+topTable(fit)
+decideTests(fit)
+
+
 ```
 
 Reikia atmesti lytiniu chromosomu probus
 
 ```{r}
+sexProbes <- which(annotation$Chr %in% c("X", "Y"))
+imputed <- impute.knn(normmat[-sexProbes,])
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
+```
 
+Some samples could be outliers messing up our results. How to detect outliers?
+
+```{r}
+out1 <- abs(pca$x[,1] - mean(pca$x[,1])) > 3*sd(pca$x[,1])
+out2 <- abs(pca$x[,2] - mean(pca$x[,2])) > 3*sd(pca$x[,2])
+outs <- which(out1 | out2)
+```
+
+PCA after removal of outliers and sex chromosome probes
+
+```{r}
+normmat = limma::normalizeBetweenArrays(gsetexpr[-sexProbes, -outs])
+
+imputed <- impute.knn(normmat)
+pca = prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(data711$predictedGender[-outs]))
+
+model <- model.matrix(~ Group + DNAmAge, data = data711[-outs,])
+fit <- lmFit(t(pca$x[, 1:10]), model)
+fit <- eBayes(fit)
+topTable(fit)
+decideTests(fit)
+
+plot(pca$x[,1], pca$x[,3], col=as.factor(data711$Group[-outs]))
+boxplot(pca$x[,1] ~ as.factor(data711$Group[-outs]))
+
+model <- glm(as.factor(Group) ~ pca$x[,1] + pca$x[,3] + DNAmAge, data=data711[-outs,], family="binomial")
+model0 <- glm(as.factor(Group) ~ DNAmAge, data=data711[-outs,], family="binomial")
+anova(model0, model, test="Chisq")
+
+computeFit <- function(permute = FALSE) {
+	if (!permute) {
+		model <- model.matrix(~ Group + DNAmAge, data=data711[-outs,])
+	} else {
+		model <- model.matrix(~ sample(Group) + DNAmAge, data=data711[-outs,])		
+	}
+	fit <- lmFit(imputed$data, model)
+	fit <- eBayes(fit)
+	fit <- topTable(fit, coef=2, number=nrow(imputed$data), sort.by="none")
+	return(fit)	
+}
+
+fit <- computeFit()
+#Histogram of p-values
+hist(fit$P.Value, breaks=100)
+#Number of significant probes
+cat("Fraction with p < 0.05 ", mean(fit$P.Value < 0.05), "\n")
+cat("Total FDR q < 0.05 ", sum(p.adjust(fit$P.Value, "fdr") < 0.05), "\n")
 ```
 
 Permutacijos!!
 
 ```{r}
-# observed = mean(pvalarray < 0.05)
-# set.seed(123)
-# expected = numeric(100)
-# for(iteration in 1:1000){
-#   groupsRandom = sample(groups)
-#   pvalsRandom = apply(normmat[1:1000,],1,function(x) {t.test(x ~ groupsRandom)$p.value})
-# expected[iteration] = mean(pvalsRandom <0.05)
-# print (iteration)
-# }
+set.seed(123)
+n = 100
+observed = mean(fit$P.Value < 0.05)
+#expected = numeric(n)
+#for(iteration in 1:n){
+#  permutedFit <- computeFit(permute = TRUE)
+#  expected[i] <- mean(permutedFit$P.Value < 0.05)
+#}
 ```
-Remember that the experiment may have more than one variable (disease). Age may be a factor two. How can we account for differences in age?
-```{r}
+Permutacijos!! (Greičiau)
 
-```
-Age and Blood cellular composition may be an issue too. Maybe the differences we observe between patient groups are not actual methylation differences but artefacts of varying blood cellular composition? How shall we deal with that?
 ```{r}
+require(doSNOW)
+require(foreach)
 
+# Sita funkcija paleidzia atskirus R procesus, nukopijuoja i 
+# juos duomenis ir paleidzia skaiciuoti paraleliai. 
+CLUSTER <- NULL
+withCluster <- function(action, outfile="", nNodes=0) {
+	require(doSNOW)
+	if (nNodes == 0) {
+	    nodefile <- Sys.getenv("PBS_NODEFILE")
+	    hosts <- readLines(nodefile)
+	} else {
+	    hosts <- rep("localhost", nNodes)
+	}
+    message(sprintf("Starting cluster on %s", paste(hosts, collapse=", ")))
+    CLUSTER <<- makeCluster(hosts, type="SOCK", outfile=outfile)		
+    registerDoSNOW(CLUSTER)
+    clusterSetupRNG(CLUSTER)
+    tryCatch(action, finally={
+        message("Stopping cluster")
+        registerDoSEQ()
+        stopCluster(CLUSTER)
+        CLUSTER <<- NULL
+    })
+}
+
+expected <- withCluster(
+	foreach(i = 1:n, 
+		.combine=c) %dopar% {
+		
+		require(limma)
+		permutedFit <- computeFit(permute = TRUE)
+		mean(permutedFit$P.Value < 0.05)
+	}, 
+	nNodes=6
+)
 ```
+
+How likely is it to see so many significant probes in randomly shuffled data.
+
+```{r}
+p <- mean(expected > observed)
+hist(expected, breaks=20, main=paste("The test p =", p))
+abline(v=observed, col="red")
+```
+
 Rezultatas: pakite probai!!!
 ```{r}
-# age <- agesampledata[1]
-# model <- model.matrix(~ 1 + unlist(groups) + unlist(age))
-# fit <- lmFit(normmat, model)
-# fit <- eBayes(fit)
+interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
+res <- cbind(fit, annotation[-sexProbes, interestingColumns])
+i <- which(res$adj.P.Val < 0.05)
+res <- res[i,]
+o <- order(res$P.Value)
+res <- res[o,]
+datatable(res, class = 'cell-border stripe')
 ```
