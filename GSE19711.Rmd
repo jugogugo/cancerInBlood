@@ -15,15 +15,14 @@ output: html_document
 # Analysis
 
 ```{r, echo=FALSE, include=FALSE}
-
-```
-
--Automatically download the data from GEO
-```{r}
 library(GEOquery)
 library(impute)
 library(limma)
 library(DT)
+```
+
+-Automatically download the data from GEO
+```{r, echo=FALSE}
 gset = getGEO("GSE19711", destdir="./")
 ```
 
@@ -246,7 +245,7 @@ observed = mean(fit$P.Value < 0.05)
 ```
 Permutacijos!! (Greičiau)
 
-```{r}
+```{r, echo=FALSE}
 require(doSNOW)
 require(foreach)
 
@@ -294,7 +293,7 @@ abline(v=observed, col="red")
 ```
 
 Rezultatas: pakite probai!!!
-```{r}
+```{r, echo=FALSE}
 interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
 res <- cbind(fit, annotation[-sexProbes, interestingColumns])
 i <- which(res$adj.P.Val < 0.05)
