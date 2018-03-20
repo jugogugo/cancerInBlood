@@ -161,18 +161,15 @@ with(data711, t.test(DNAmAge ~ Group))
 ```{r, include=FALSE, echo=FALSE}
 imputed <- impute.knn(normmat)
 ```
-```{r, echo=FALSE}
+```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
-
 
 model <- model.matrix(~ Group + DNAmAge, data = data711)
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
 topTable(fit)
 decideTests(fit)
-
-
 ```
 
 Reikia atmesti lytiniu chromosomu probus
@@ -183,7 +180,7 @@ sexProbes <- which(annotation$Chr %in% c("X", "Y"))
 ```{r, include=FALSE, echo=FALSE}
 imputed <- impute.knn(normmat)
 ```
-```{r, echo=FALSE}
+```{r}
 pca <- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 ```
@@ -204,7 +201,7 @@ normmat = limma::normalizeBetweenArrays(gsetexpr[-sexProbes, -outs])
 ```{r, include=FALSE, echo=FALSE}
 imputed <- impute.knn(normmat)
 ```
-```{r, echo=FALSE}
+```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender[-outs]))
 
