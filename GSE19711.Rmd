@@ -73,8 +73,8 @@ For each probe compute a t-test to verify if the distributions of beta values wi
 pvalarray = array()
 namearray = array()
 for (i in 1:length(probeset)){
-  case = gsetexpr[i, grep("Case", disease$`sample type:ch1`)]
-  control = gsetexpr[i, grep("Control", disease$`sample type:ch1`)]
+  case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
+  control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
   tt = t.test(case, control)
   pvals <- tt$p.value
   pvalarray[i] = tt$p.value
@@ -93,8 +93,8 @@ Result is 51.228 seconds.
 
 ```{r}
 system.time( for (i in 1:length(probeset)){
-  case = gsetexpr[i, grep("Case", disease$`sample type:ch1`)]
-  control = gsetexpr[i, grep("Control", disease$`sample type:ch1`)]
+  case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
+  control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
   tt = t.test(case, control)
   pvalarray[i] = tt$p.value
 })
