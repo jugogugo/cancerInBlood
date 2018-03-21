@@ -279,39 +279,3 @@ datatable(res, class = 'cell-border stripe', options = list(
   scrollX = TRUE
 ))
 ```
-=======
-
-## PCA. Dėstytojo dalis
-
-```{r}
-
-imputed <- impute.knn(matrix)
-pca <- prcomp(t(imputed$data), scale=FALSE)
-
-
-x <- 1:10
-y <- (pca$sdev  / sum(pca$sdev))[1:10]
-plot(x, y, type='h')
-
-
-pairs(pca$x[, 1:3], col=as.factor(groups))
-
-table(annotation$CHR)
-
-d <- dist(pca$x[, 1:5])
-h <- hclust(d, method="average")
-plot(h)
-```
-
-```{r}
-library(limma)
-age <- rnorm(ncol(matrix), mean=60)
-model <- model.matrix(~ 1 + groups + age)
-fit <- lmFit(matrix, model)
-fit <- eBayes(fit)
-topTable(fit, coef=2)
-# => rezultatas: reiksmingai pakite probai del ligos, atsizvelgiant i amziaus ir lyties skirtumus!
-
-# amzius: https://dnamage.genetics.ucla.edu, kraujo kompozicija
-```
-
