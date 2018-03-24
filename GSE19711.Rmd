@@ -58,6 +58,18 @@ annotation = getGEO("GPL8490", destdir = "./")
 annotation = Table(annotation)
 head(annotation)
 ```
+- Cell count estimates
+```{r}
+fname <- "GSE19711_cellCounts.csv"
+if (!file.exists(fname)) {
+	require(meffil)
+	estimates <- meffil.estimate.cell.counts.from.betas(matrix, 
+		cell.type.reference="blood gse35069", verbose = TRUE)
+	write.csv(estimates, file=fname, row.names=TRUE)	
+}
+estimates <- read.csv(fname)
+head(estimates)
+```
 
 -Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
 ```{r}
