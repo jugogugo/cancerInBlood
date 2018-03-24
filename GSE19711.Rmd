@@ -143,49 +143,87 @@ location [1:20]
 We should find genes and then chromosomes (where probes are located). We do so by matching the names of adjusted pvalues and annotation IDs.
 
 
-Normalizavimas, kvantiliu normalizacija
+NEXT STEPS:
+
+Normalization
 
 ```{r}
 normmat = limma::normalizeBetweenArrays(gsetexpr)
 ```
 
-PCA before removal of outliers and sex chromosome probes
+Creating dataset with SampleID's, DNAmAge, predicted gender and adding case and control groups
 
 ```{r}
 data711 = read.csv('GSE19711.csv')
 data711$Group = group
 head(data711)
+```
+
+visualizing the spread of case and control groups and applying t-tests to our dataset
+
+```{r}
 with(data711, boxplot(DNAmAge ~ Group))
 with(data711, t.test(DNAmAge ~ Group))
 ```
-```{r, include=FALSE, echo=FALSE}
+
+adding blood cell composition to dataset 
+
+```{r}
+cellCounts = read.csv('GSE19711_cellCounts.csv')
+stopifnot(all(data711$SampleID == cellCounts$X))
+data711$Bcell <- cellCounts$Bcell
+data711$CD4T <- cellCounts$CD4T
+data711$CD8T <- cellCounts$CD8T
+data711$Gran <- cellCounts$Gran
+data711$Mono <- cellCounts$Mono
+data711$NK <- cellCounts$NK
+```
+
+Imputation using k-nearest neighbors algorithm. We need to replace missing data with substituted values.
+In this algorithm missing data is imputed based on the mean of non-missing values of the neighbors.
+
+```{r, results="hide"}
 imputed <- impute.knn(normmat)
 ```
+
+PCA before removal of outliers and sex chromosome probes
+
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
+```
 
-model <- model.matrix(~ Group + DNAmAge, data = data711)
+Performing t-tests, seeing which principal components are affected by control group, DNAmAge and blood cell composition data
+
+```{r}
+model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711)
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-topTable(fit)
+toptable(fit)
 decideTests(fit)
 ```
 
-Reikia atmesti lytiniu chromosomu probus
+Selecting sex chromosome probes
 
 ```{r}
 sexProbes <- which(annotation$Chr %in% c("X", "Y"))
 ```
-```{r, include=FALSE, echo=FALSE}
-imputed <- impute.knn(normmat)
+
+Impute without sex chromosome probes
+
+```{r, results="hide"}
+imputed <- impute.knn(normmat[-sexProbes,])
 ```
+
+PCA after removal of sex chromosome probes
+
 ```{r}
 pca <- prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 ```
 
 Some samples could be outliers messing up our results. How to detect outliers?
+We select outliers who are further than 3 standart deviations from the mean.
 
 ```{r}
 out1 <- abs(pca$x[,1] - mean(pca$x[,1])) > 3*sd(pca$x[,1])
@@ -193,31 +231,38 @@ out2 <- abs(pca$x[,2] - mean(pca$x[,2])) > 3*sd(pca$x[,2])
 outs <- which(out1 | out2)
 ```
 
-PCA after removal of outliers and sex chromosome probes
+Removal of outliers and sex chromosome probes and Normalization
 
 ```{r}
 normmat = limma::normalizeBetweenArrays(gsetexpr[-sexProbes, -outs])
 ```
-```{r, include=FALSE, echo=FALSE}
+
+Imputation after removal of outliers and sex chromosome probes
+
+```{r, results="hide"}
 imputed <- impute.knn(normmat)
 ```
+
+PCA after removal of outliers and sex chromosome probes
+
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
 pairs(pca$x[,1:4], col=as.factor(data711$predictedGender[-outs]))
+```
 
-model <- model.matrix(~ Group + DNAmAge, data = data711[-outs,])
+Performing t-tests after removal of outliers, seeing which principal components are affected by control group, DNAmAge and blood cell composition data
+
+```{r}
+model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-topTable(fit)
+toptable(fit)
 decideTests(fit)
+```
 
-plot(pca$x[,1], pca$x[,3], col=as.factor(data711$Group[-outs]))
-boxplot(pca$x[,1] ~ as.factor(data711$Group[-outs]))
+Test each probe for differences
 
-model <- glm(as.factor(Group) ~ pca$x[,1] + pca$x[,3] + DNAmAge, data=data711[-outs,], family="binomial")
-model0 <- glm(as.factor(Group) ~ DNAmAge, data=data711[-outs,], family="binomial")
-anova(model0, model, test="Chisq")
-
+```{r}
 computeFit <- function(permute = FALSE) {
 	if (!permute) {
 		model <- model.matrix(~ Group + DNAmAge, data=data711[-outs,])
@@ -231,14 +276,16 @@ computeFit <- function(permute = FALSE) {
 }
 
 fit <- computeFit()
-#Histogram of p-values
-hist(fit$P.Value, breaks=100)
-#Number of significant probes
-cat("Fraction with p < 0.05 ", mean(fit$P.Value < 0.05), "\n")
-cat("Total FDR q < 0.05 ", sum(p.adjust(fit$P.Value, "fdr") < 0.05), "\n")
 ```
 
-Permutacijos!!
+Histogram of p-values
+
+```{r}
+
+hist(fit$P.Value, breaks=100)
+```
+
+Permutations!!
 
 ```{r}
 set.seed(123)
@@ -250,7 +297,7 @@ observed = mean(fit$P.Value < 0.05)
 #  expected[i] <- mean(permutedFit$P.Value < 0.05)
 #}
 ```
-Permutacijos!! (Greičiau)
+Permutations!! (faster)
 
 ```{r, echo=FALSE, include=FALSE}
 require(doSNOW)
@@ -299,7 +346,8 @@ hist(expected, breaks=20, main=paste("The test p =", p))
 abline(v=observed, col="red")
 ```
 
-Rezultatas: pakite probai!!!
+Result: changed probes
+
 ```{r, echo=FALSE}
 interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
 res <- cbind(fit, annotation[-sexProbes, interestingColumns])
