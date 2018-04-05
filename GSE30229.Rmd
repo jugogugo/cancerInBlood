@@ -207,6 +207,7 @@ head(dnamEstimates)
 
 Distribution of DNAmAge across sample groups:
 
+
 ```{r, include=TRUE, echo=TRUE}
 with(dnamEstimates, boxplot(DNAmAge ~ Group))
 with(dnamEstimates, t.test(DNAmAge ~ Group))
@@ -234,7 +235,7 @@ PCs are heavily influenced by sex. We can test if other parameters are related t
 model <- model.matrix(~ Group + predictedGender + DNAmAge, data=dnamEstimates)
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-topTable(fit)
+toptable(fit)
 decideTests(fit)
 ```
 
@@ -248,7 +249,7 @@ But we should remove sex chromosomes and outliers before we make any conclusions
 
 ```{r, include=TRUE, echo=TRUE}
 sexProbes <- which(annotate$Chr %in% c("X", "Y"))
-````
+```
 
 Do imputation again
 
@@ -313,10 +314,19 @@ pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender[-outs]))
 And test which PCs are influenced by known variables
 
 ```{r, include=TRUE, echo=TRUE}
-model <- model.matrix(~ Group + predictedGender + DNAmAge, data=dnamEstimates[-outs,])
+# cellCounts <- read.csv("./GSE30229_cellCounts.csv")
+stopifnot(all(dnamEstimates$SampleID == estimates$X))
+dnamEstimates$Bcell <- estimates$Bcell
+dnamEstimates$CD4T <- estimates$CD4T
+dnamEstimates$CD8T <- estimates$CD8T
+dnamEstimates$Gran <- estimates$Gran
+dnamEstimates$Mono <- estimates$Mono
+dnamEstimates$NK <- estimates$NK
+
+model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-topTable(fit)
+toptable(fit)
 decideTests(fit)
 ```
 
@@ -348,9 +358,9 @@ Hooray! The principal components are predictive of diagnosis!
 # Perrasau sena gera computeFit funkcija
 computeFit <- function(permute = FALSE) {
 	if (!permute) {
-		model <- model.matrix(~ Group + predictedGender + DNAmAge, data=dnamEstimates[-outs,])
+		model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])
 	} else {
-		model <- model.matrix(~ sample(Group) + predictedGender + DNAmAge, data=dnamEstimates[-outs,])		
+		model <- model.matrix(~ sample(Group) + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])		
 	}
 	fit <- lmFit(imputed$data, model)
 	fit <- eBayes(fit)
@@ -367,7 +377,7 @@ fit <- computeFit()
 Histogram of P values
 
 ```{r}
-hist(fit$P.Value, breaks=100)
+hist(fit$P.Value, breaks=1000)
 ```
 
 Number of significant probes
@@ -384,7 +394,7 @@ Permutations
 set.seed(123)
 n <- 100
 observed <- mean(fit$P.Value < 0.05)
-# Zemiau yra greitesnis kodas...
+#Zemiau yra greitesnis kodas...
 # expected <- numeric(n)
 # for (i in 1:n) {
 #   permutedFit <- computeFit(permute = TRUE)
@@ -449,9 +459,14 @@ abline(v=observed, col="red")
 ```{r, include=TRUE, echo=FALSE}
 interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
 res <- cbind(fit, annotate[-sexProbes, interestingColumns])
-i <- which(res$adj.P.Val < 0.05)
+i <- which(res$P.Value < 0.05)
 res <- res[i,]
 o <- order(res$P.Value)
 res <- res[o,]
-datatable(res, class = 'cell-border stripe')
+datatable(res, class = 'cell-border stripe', options = list(
+  searching = TRUE,
+  pageLength = 5,
+  lengthMenu = c(5, 10, 15, 20),
+  scrollX = TRUE
+))
 ```
