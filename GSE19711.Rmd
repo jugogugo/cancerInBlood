@@ -48,7 +48,7 @@ head(gsetexpr[, 1:5])
 # 
 # probeset = rownames(gsetexpr)
 # length(probeset)
-dim(sampleset)
+dim(gsetexpr)
 ```
 
 Number of samples `r ncol(gsetexpr)`. Number of probes `r nrow(gsetexpr)`
