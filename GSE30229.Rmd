@@ -470,3 +470,38 @@ datatable(res, class = 'cell-border stripe', options = list(
   scrollX = TRUE
 ))
 ```
+
+### Comparing significant probes from all datasets
+```{r}
+first <- read.csv("GSE30229_results.csv")
+first <- first[[1]]
+second <- read.csv("GSE19711_results.csv")
+second <- second[[1]]
+third <- read.csv("GSE50409_results.csv")
+third <- third[[1]]
+```
+
+Creating table of all probes  ID and FALSE value for dataset columns as default
+
+```{r}
+comparing_table <- data.frame(ID = annotate$ID, GSE_30229 = FALSE, GSE_19711 = FALSE, GSE_50409 = FALSE)
+```
+
+With match function table is modified, significant probes are compared
+
+```{r}
+id_30229 <- match(first, comparing_table$ID)
+comparing_table[id_30229,2] <- TRUE
+id_19711 <- match(second, comparing_table$ID)
+comparing_table[id_19711,3] <- TRUE
+id_50409 <- match(third, comparing_table$ID)
+comparing_table[id_50409,4] <- TRUE
+```
+
+Fisher test between significant probes of each dataset
+
+```{r}
+fisher.test(table(comparing_table$GSE_30229, comparing_table$GSE_19711))
+fisher.test(table(comparing_table$GSE_30229, comparing_table$GSE_19711))
+fisher.test(table(comparing_table$GSE_19711, comparing_table$GSE_50409))
+```
