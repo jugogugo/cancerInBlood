@@ -92,6 +92,12 @@ table(group)
 - Cell count estimates
 ```{r}
 fname <- "GSE30229_cellCounts.csv"
+if (!file.exists(fname)) {
+	require(meffil)
+	estimates <- meffil.estimate.cell.counts.from.betas(betaValueMatrix, 
+		cell.type.reference="blood gse35069", verbose = TRUE)
+	write.csv(estimates, file=fname, row.names=TRUE)	
+}
 estimates <- read.csv(fname)
 head(estimates)
 ```
@@ -201,6 +207,7 @@ head(dnamEstimates)
 
 Distribution of DNAmAge across sample groups:
 
+
 ```{r, include=TRUE, echo=TRUE}
 with(dnamEstimates, boxplot(DNAmAge ~ Group))
 with(dnamEstimates, t.test(DNAmAge ~ Group))
@@ -307,14 +314,14 @@ pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender[-outs]))
 And test which PCs are influenced by known variables
 
 ```{r, include=TRUE, echo=TRUE}
-cellCounts <- read.csv("./GSE30229_cellCounts.csv")
-stopifnot(all(dnamEstimates$SampleID == cellCounts$X))
-dnamEstimates$Bcell <- cellCounts$Bcell
-dnamEstimates$CD4T <- cellCounts$CD4T
-dnamEstimates$CD8T <- cellCounts$CD8T
-dnamEstimates$Gran <- cellCounts$Gran
-dnamEstimates$Mono <- cellCounts$Mono
-dnamEstimates$NK <- cellCounts$NK
+# cellCounts <- read.csv("./GSE30229_cellCounts.csv")
+stopifnot(all(dnamEstimates$SampleID == estimates$X))
+dnamEstimates$Bcell <- estimates$Bcell
+dnamEstimates$CD4T <- estimates$CD4T
+dnamEstimates$CD8T <- estimates$CD8T
+dnamEstimates$Gran <- estimates$Gran
+dnamEstimates$Mono <- estimates$Mono
+dnamEstimates$NK <- estimates$NK
 
 model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
@@ -452,7 +459,7 @@ abline(v=observed, col="red")
 ```{r, include=TRUE, echo=FALSE}
 interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
 res <- cbind(fit, annotate[-sexProbes, interestingColumns])
-i <- which(res$adj.P.Val < 0.05)
+i <- which(res$P.Value < 0.05)
 res <- res[i,]
 o <- order(res$P.Value)
 res <- res[o,]
@@ -462,4 +469,39 @@ datatable(res, class = 'cell-border stripe', options = list(
   lengthMenu = c(5, 10, 15, 20),
   scrollX = TRUE
 ))
+```
+
+### Comparing significant probes from all datasets
+```{r}
+first <- read.csv("GSE30229_results.csv")
+first <- first[[1]]
+second <- read.csv("GSE19711_results.csv")
+second <- second[[1]]
+third <- read.csv("GSE50409_results.csv")
+third <- third[[1]]
+```
+
+Creating table of all probes  ID and FALSE value for dataset columns as default
+
+```{r}
+comparing_table <- data.frame(ID = annotate$ID, GSE_30229 = FALSE, GSE_19711 = FALSE, GSE_50409 = FALSE)
+```
+
+With match function table is modified, significant probes are compared
+
+```{r}
+id_30229 <- match(first, comparing_table$ID)
+comparing_table[id_30229,2] <- TRUE
+id_19711 <- match(second, comparing_table$ID)
+comparing_table[id_19711,3] <- TRUE
+id_50409 <- match(third, comparing_table$ID)
+comparing_table[id_50409,4] <- TRUE
+```
+
+Fisher test between significant probes of each dataset
+
+```{r}
+fisher.test(table(comparing_table$GSE_30229, comparing_table$GSE_19711))
+fisher.test(table(comparing_table$GSE_30229, comparing_table$GSE_19711))
+fisher.test(table(comparing_table$GSE_19711, comparing_table$GSE_50409))
 ```
