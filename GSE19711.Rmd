@@ -19,44 +19,59 @@ library(GEOquery)
 library(impute)
 library(limma)
 library(DT)
+library(data.table) #labai efektyfi data.frame implementacija, leidzianti operuoti dideliais duomenu kiekiais. Man labai patinka
+
+knitr::opts_chunk$set(echo=TRUE, include=TRUE)
 ```
 
 -Automatically download the data from GEO
-```{r, include=FALSE, echo=FALSE}
+```{r, include=FALSE, echo=TRUE}
 gset = getGEO("GSE19711", destdir="./")
 ```
 
 -Obtain the matrix of beta values where each row corresponds to probes and each column corresponds to samples
 ```{r}
 gsetexpr = exprs(gset[[1]])
-rownames(gsetexpr)[1:5]
-colnames(gsetexpr)[1:5]
+# JG> this is simpler:
+# rownames(gsetexpr)[1:5]
+# colnames(gsetexpr)[1:5]
+head(gsetexpr[, 1:5])
+
+
 ```
 
 -How many samples and how many probes do you have in the data?
 ```{r}
-sampleset = colnames(gsetexpr)
-length(sampleset)
-
-probeset = rownames(gsetexpr)
-length(probeset)
+# JG> this is simpler:
+# sampleset = colnames(gsetexpr)
+# length(sampleset)
+# 
+# probeset = rownames(gsetexpr)
+# length(probeset)
+dim(gsetexpr)
 ```
+
+Number of samples `r ncol(gsetexpr)`. Number of probes `r nrow(gsetexpr)`
+
 
 -How are the beta values distributed?
 ```{r}
- hist(gsetexpr)
+hist(gsetexpr)
 ```
 
 -Do your probes have names?
 ```{r}
-probeset[1:5]
+# JG> 
+# probeset[1:5]
+head(rownames(gsetexpr))
 ```
 
 -Do you have annotation that tells the coordinate (in hg19) of each probe and its genomic features (such as related gene name)?
 ```{r}
 annotation = getGEO("GPL8490", destdir = "./")
 annotation = Table(annotation)
-head(annotation)
+# JG> 
+head(annotation[, c("ID", "Chr", "MapInfo")])
 ```
 
 -Do you know which samples correspond to healthy individuals, and which samples correspond to the sick ones?
@@ -67,18 +82,49 @@ group = sapply(strsplit(as.character(group), split=" "),'[[', 8)
 group <- as.factor(group)
 table(group)
 ```
+
+- Cell count estimates
+```{r}
+fname <- "GSE19711_cellCounts.csv"
+if (!file.exists(fname)) {
+  require(meffil)
+  estimates <- meffil.estimate.cell.counts.from.betas(gsetexpr, 
+    cell.type.reference="blood gse35069", verbose = TRUE)
+  write.csv(estimates, file=fname, row.names=TRUE)  
+}
+estimates <- read.csv(fname)
+head(estimates)
+```
+
+
+
 For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
 ```{r}
-pvalarray = array()
-namearray = array()
-for (i in 1:length(probeset)){
-  case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
-  control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
-  tt = t.test(case, control)
-  pvals <- tt$p.value
-  pvalarray[i] = tt$p.value
-  namearray[i] = probeset[i] 
+# JG> I remove namearray variable and assign probe names to pvalarray as a property
+# JG> Also note that in R <- is an assignment operator
+# JG> And we can do the next task in the same code chunk saving computation time
+
+computeFits <- function() {
+  pvalarray <- array()
+  for (i in 1:nrow(gsetexpr)){
+    case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
+    control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
+    tt = t.test(case, control)
+    pvals <- tt$p.value
+    pvalarray[i] = tt$p.value
+    # namearray[i] = probeset[i] 
+  }
+  names(pvalarray) <- rownames(gsetexpr)
+  return (pvalarray)
 }
+
+time <- system.time({
+  pvalarray <- computeFits()
+})
+
+
+head(pvalarray)
+summary(pvalarray)
 ```
 
 Plot the distribution of p values. What is the expected distribution? How does it differ from what you get?
@@ -88,15 +134,17 @@ We get Anti-conservative p-values. All null p-values form a flat distribution. P
 hist(pvalarray, breaks = 100)
 ```
 Performance-wise, how long will it take to compute the test for all probes?
-Result is 51.228 seconds.
+
 
 ```{r}
-system.time( for (i in 1:length(probeset)){
-  case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
-  control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
-  tt = t.test(case, control)
-  pvalarray[i] = tt$p.value
-})
+# JG> result comes from above
+# system.time( for (i in 1:length(probeset)){
+#   case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
+#   control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
+#   tt = t.test(case, control)
+#   pvalarray[i] = tt$p.value
+# })
+time
 ```
 What is multiple hypothesis testing? Such testing means that we are trying to check validity of a number of hypotheses simultaneausly. However, as the number of hypotheses increases, o does the chance for observing at least one significant result by chance. In order to reduce the impact of this isssue, it is important to adjust for multiple hypothesis testing, so observing a significant result by chance is below our chosen significance level.
 
@@ -117,8 +165,9 @@ The p-values should be adjusted using "adjust" funtion. It is important to choos
 Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 ```{r}
 pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.05]
-namearray.significant <- namearray[pvalarray.adjusted < 0.05]
-namearray.significant [1:20]
+# JG>
+# namearray.significant <- namearray[pvalarray.adjusted < 0.05]
+# namearray.significant [1:20]
 ```
 In this case we define smaller than 0.05 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed.
 
@@ -126,26 +175,34 @@ Where are these probes? What genes are they related to?
 
 -Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 ```{r}
-pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.04]
-namearray.significant <- namearray[pvalarray.adjusted < 0.04]
-namearray.significant [1:20]
+# JG> 
+# pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.05]
+# namearray.significant <- namearray[pvalarray.adjusted < 0.05]
+# namearray.significant [1:20]
+namearray.significant <- names(pvalarray)[pvalarray.adjusted < 0.05]
+length(pvalarray.significant)
 ```
-In this case we define smaller than 0.04 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed. 
+In this case we define smaller than 0.05 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed. 
 
 -Where are these probes? What genes are they related to?
 
 ```{r}
-genes <- annotation$Gene_ID[match(namearray.significant, annotation$ID)]
-location <- annotation$CPG_ISLAND_LOCATIONS[match(namearray.significant, annotation$ID)]
-genes [1:20]
-location [1:20]
+# JG> CpG Islands are a very interesting thing, but what is your intention here?
+# genes <- annotation$Gene_ID[match(namearray.significant, annotation$ID)]
+# location <- annotation$CPG_ISLAND_LOCATIONS[match(namearray.significant, annotation$ID)]
+# genes [1:20]
+# location [1:20]
+# head(annotation)
+# JG> this is the simplest approach
+#annotation[annotation$ID %in% namearray.significant, ]
+annotation$Symbol[match(names(pvalarray.significant), annotation$ID)]
 ```
 We should find genes and then chromosomes (where probes are located). We do so by matching the names of adjusted pvalues and annotation IDs.
 
 
-NEXT STEPS:
 
-Normalization
+
+## Normalization
 
 ```{r}
 normmat = limma::normalizeBetweenArrays(gsetexpr)
@@ -156,12 +213,15 @@ Creating dataset with SampleID's, DNAmAge, predicted gender and adding case and 
 ```{r}
 data711 = read.csv('GSE19711.csv')
 data711$Group = group
+# JG> we have to make sure that ordering is the same
+stopifnot(all(colnames(normmat) == data711$SampleID))
 head(data711)
 ```
 
 visualizing the spread of case and control groups and applying t-tests to our dataset
 
 ```{r}
+# JG> Here you are testing if there are differences in age between the two groups of samples
 with(data711, boxplot(DNAmAge ~ Group))
 with(data711, t.test(DNAmAge ~ Group))
 ```
@@ -179,10 +239,9 @@ data711$Mono <- cellCounts$Mono
 data711$NK <- cellCounts$NK
 ```
 
-Imputation using k-nearest neighbors algorithm. We need to replace missing data with substituted values.
-In this algorithm missing data is imputed based on the mean of non-missing values of the neighbors.
+Imputation using k-nearest neighbors algorithm. We need to replace missing data with substituted values. In this algorithm missing data is imputed based on the mean of non-missing values of the neighbors.
 
-```{r, results="hide"}
+```{r}
 imputed <- impute.knn(normmat)
 ```
 
@@ -190,36 +249,14 @@ PCA before removal of outliers and sex chromosome probes
 
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
-pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
-```
 
-Performing t-tests, seeing which principal components are affected by control group, DNAmAge and blood cell composition data
-
-```{r}
-model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711)
-fit <- lmFit(t(pca$x[, 1:10]), model)
-fit <- eBayes(fit)
-toptable(fit)
-decideTests(fit)
+pairs(pca$x[,1:4], col=as.factor(data711$Group))
 ```
 
 Selecting sex chromosome probes
 
 ```{r}
 sexProbes <- which(annotation$Chr %in% c("X", "Y"))
-```
-
-Impute without sex chromosome probes
-
-```{r, results="hide"}
-imputed <- impute.knn(normmat[-sexProbes,])
-```
-
-PCA after removal of sex chromosome probes
-
-```{r}
-pca <- prcomp(t(imputed$data), scale=FALSE)
-pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 ```
 
 Some samples could be outliers messing up our results. How to detect outliers?
@@ -247,7 +284,9 @@ PCA after removal of outliers and sex chromosome probes
 
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
-pairs(pca$x[,1:4], col=as.factor(data711$predictedGender[-outs]))
+#JG> LEt's color by group
+
+pairs(pca$x[,1:4], col=as.factor(data711$Group[-outs]))
 ```
 
 Performing t-tests after removal of outliers, seeing which principal components are affected by control group, DNAmAge and blood cell composition data
@@ -256,18 +295,21 @@ Performing t-tests after removal of outliers, seeing which principal components 
 model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-toptable(fit)
+topTable(fit, coef=2)
 decideTests(fit)
 ```
+
+JG> The result above shows very strong cellular composition influence on the data. We have to include cellular composition estimates into the subsequent model.
 
 Test each probe for differences
 
 ```{r}
+
 computeFit <- function(permute = FALSE) {
 	if (!permute) {
-		model <- model.matrix(~ Group + DNAmAge, data=data711[-outs,])
+		model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=data711[-outs,])
 	} else {
-		model <- model.matrix(~ sample(Group) + DNAmAge, data=data711[-outs,])		
+		model <- model.matrix(~ sample(Group) + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=data711[-outs,])		
 	}
 	fit <- lmFit(imputed$data, model)
 	fit <- eBayes(fit)
@@ -346,7 +388,7 @@ hist(expected, breaks=20, main=paste("The test p =", p))
 abline(v=observed, col="red")
 ```
 
-Result: changed probes
+JG> This result shows that the possibility to obtain so many probes with p < 0.05 is very small, that is, `r p`.
 
 ```{r, echo=FALSE}
 interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
@@ -356,4 +398,127 @@ res <- res[i,]
 o <- order(res$P.Value)
 res <- res[o,]
 datatable(res, class = 'cell-border stripe')
+```
+
+Once we have analysis of all three datasets, can we pull them all together and make conclusions?
+
+```{r}
+set.seed(123)
+n <- 100
+
+computeFit <- function(permute = FALSE, bvals, cases) {
+    if (!permute) {
+        model <- model.matrix(~ cases)
+    } else {
+        model <- model.matrix(~ sample(cases))        
+    }
+    fit <- lmFit(bvals, model)
+    fit <- eBayes(fit)
+    fit <- topTable(fit, coef=2, number=nrow(bvals), sort.by="none")
+    return(fit$P.Value < 0.05)    
+}
+
+
+observed1 <- cbind(computeFit(permute = FALSE, bvals = gsetexpr, cases = group))
+head(observed1)
+table(observed1)
+```
+
+Getting GSE30229 data 
+
+```{r, include=FALSE, echo=TRUE}
+GSE30229 <- getGEO("GSE30229", destdir = "./")
+```
+```{r}
+betaValueMatrix <- exprs(GSE30229[[1]])
+sickness <- pData(phenoData(GSE30229[[1]]))
+group2 <- sickness[,1]
+
+# isgaunam case/control statusa is group kintamojo
+group2 <- sapply(strsplit(as.character(group2), split=" "),
+    '[[', 1)
+group2 <- as.factor(group2)
+observed2 <- cbind(computeFit(permute = FALSE, bvals = betaValueMatrix, cases = group2))
+head(observed2)
+table(observed2)
+```
+
+Getting gse50409 data 
+
+```{r, include=FALSE, echo=TRUE}
+gse50409 <- getGEO("gse50409", destdir="./")
+```
+```{r}
+matrix <- exprs(gse50409[[1]])
+disease <- pData(phenoData(gse50409[[1]]))
+group3 <- as.factor(as.character(disease$source_name_ch1))
+observed3 <- cbind(computeFit(permute = FALSE, bvals = matrix, cases = group3))
+head(observed3)
+table(observed3)
+```
+
+Dealing with expected values, generating permutations for all datasets:
+
+```{r}
+# Permutacijos is sio dataseto
+
+expected1 <- c()
+#exptest = expected1
+expected1 <- withCluster(
+	foreach(i = 1:n, .combine=cbind) %dopar% {
+		require(limma)
+		computeFit(permute=TRUE, bvals = gsetexpr, cases = group)
+	}, 
+	nNodes=6
+)
+table(expected1)
+
+# Permutacijos is GSE30229 dataseto 
+expected2 <- c()
+expected2 <- withCluster(
+	foreach(i = 1:n, .combine=cbind) %dopar% {
+		require(limma)
+		computeFit(permute=TRUE, bvals = betaValueMatrix, cases = group2)
+	}, 
+	nNodes=6
+)
+table(expected2)
+
+# Permutacijos is GSE50409 dataseto
+expected3 <- c()
+expected3 <- withCluster(
+	foreach(i = 1:n, .combine=cbind) %dopar% {
+		require(limma)
+		computeFit(permute=TRUE, bvals = matrix, cases = group3)
+	}, 
+	nNodes=6
+)
+table(expected3)
+```
+
+Žiurime, kad reikšmingi (TRUE) lokusai sutaptų tarp permutacijų
+
+```{r}
+exp_overlaps <- c()
+obs_overlaps <- c()
+for (i in 1:n){
+  exp_overlaps[i] <- sum((expected1[,i] & expected2[,i]) & expected3[,i])
+}
+obs_overlaps <- sum((observed1[,1] & observed2[,1]) & observed3[,1])
+
+```
+
+Rasti persidengimai:
+
+```{r}
+obs_overlaps
+```
+
+Tikėtini persidengimai:
+
+```{r}
+exp_overlaps
+
+hist(exp_overlaps, breaks=20)
+abline(v=obs_overlaps, col="red")
 ```
