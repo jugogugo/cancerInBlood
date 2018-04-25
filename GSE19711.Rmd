@@ -100,10 +100,6 @@ head(estimates)
 
 For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
 ```{r}
-# JG> I remove namearray variable and assign probe names to pvalarray as a property
-# JG> Also note that in R <- is an assignment operator
-# JG> And we can do the next task in the same code chunk saving computation time
-
 computeFits <- function() {
   pvalarray <- array()
   for (i in 1:nrow(gsetexpr)){
@@ -112,7 +108,6 @@ computeFits <- function() {
     tt = t.test(case, control)
     pvals <- tt$p.value
     pvalarray[i] = tt$p.value
-    # namearray[i] = probeset[i] 
   }
   names(pvalarray) <- rownames(gsetexpr)
   return (pvalarray)
@@ -137,13 +132,6 @@ Performance-wise, how long will it take to compute the test for all probes?
 
 
 ```{r}
-# JG> result comes from above
-# system.time( for (i in 1:length(probeset)){
-#   case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
-#   control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
-#   tt = t.test(case, control)
-#   pvalarray[i] = tt$p.value
-# })
 time
 ```
 What is multiple hypothesis testing? Such testing means that we are trying to check validity of a number of hypotheses simultaneausly. However, as the number of hypotheses increases, o does the chance for observing at least one significant result by chance. In order to reduce the impact of this isssue, it is important to adjust for multiple hypothesis testing, so observing a significant result by chance is below our chosen significance level.
@@ -165,9 +153,6 @@ The p-values should be adjusted using "adjust" funtion. It is important to choos
 Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 ```{r}
 pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.05]
-# JG>
-# namearray.significant <- namearray[pvalarray.adjusted < 0.05]
-# namearray.significant [1:20]
 ```
 In this case we define smaller than 0.05 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed.
 
@@ -175,10 +160,6 @@ Where are these probes? What genes are they related to?
 
 -Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 ```{r}
-# JG> 
-# pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.05]
-# namearray.significant <- namearray[pvalarray.adjusted < 0.05]
-# namearray.significant [1:20]
 namearray.significant <- names(pvalarray)[pvalarray.adjusted < 0.05]
 length(pvalarray.significant)
 ```
@@ -187,14 +168,6 @@ In this case we define smaller than 0.05 adjusted pvalue as "significant". The v
 -Where are these probes? What genes are they related to?
 
 ```{r}
-# JG> CpG Islands are a very interesting thing, but what is your intention here?
-# genes <- annotation$Gene_ID[match(namearray.significant, annotation$ID)]
-# location <- annotation$CPG_ISLAND_LOCATIONS[match(namearray.significant, annotation$ID)]
-# genes [1:20]
-# location [1:20]
-# head(annotation)
-# JG> this is the simplest approach
-#annotation[annotation$ID %in% namearray.significant, ]
 annotation$Symbol[match(names(pvalarray.significant), annotation$ID)]
 ```
 We should find genes and then chromosomes (where probes are located). We do so by matching the names of adjusted pvalues and annotation IDs.
@@ -241,7 +214,7 @@ data711$NK <- cellCounts$NK
 
 Imputation using k-nearest neighbors algorithm. We need to replace missing data with substituted values. In this algorithm missing data is imputed based on the mean of non-missing values of the neighbors.
 
-```{r}
+```{r, results="hide"}
 imputed <- impute.knn(normmat)
 ```
 
@@ -284,7 +257,6 @@ PCA after removal of outliers and sex chromosome probes
 
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
-#JG> LEt's color by group
 
 pairs(pca$x[,1:4], col=as.factor(data711$Group[-outs]))
 ```
