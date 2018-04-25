@@ -264,6 +264,7 @@ Performing t-tests after removal of outliers, seeing which principal components 
 model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
+topTable(fit, coef=2)
 decideTests(fit)
 ```
 
