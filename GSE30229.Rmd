@@ -1,27 +1,40 @@
 ---
 title: "GSE30229"
 date: '2018 m. kovas'
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
 ---
+
+```{r setup, include=FALSE, echo=FALSE}
+# Cia pasikraunam bibliotekas
+library(GEOquery)
+library(limma)
+library(impute)
+library(DT)
+```
+
 # Authors
 - Edgaras Legus
-- Vitalija Misiukonytė
-- Brigita Ižganaitytė
-- Gabrielė Dilytė
-- Dalia Masilionytė
-- Reda Vaisėtaitė
-- Paulius Matijošaitis
-- Dovilė Patiejūnaitė
+- Vitalija Misiukonyte
+- Brigita Izganaityte
+- Gabriele Dilyte
+- Dalia Masilionyte
+- Reda Vaisetaite
+- Paulius Matijosaitis
+- Dovile Patiejunaite
 
 # Analysis
 ## Step 2
-Downloading the data using GEO 
-```{r, include=TRUE, echo=TRUE}
-library(GEOquery)
+- Downloading the data using GEO 
+
+```{r, include=FALSE, echo=FALSE}
 GSE30229 <- getGEO("GSE30229", destdir = "./")
 ```
 
-Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
+- Obtaining the betaValueMatrix of beta values where each row corresponds to probes (names) and each column corresponds to samples
 
 ```{r, include=TRUE, echo=TRUE}
 betaValueMatrix <- exprs(GSE30229[[1]])
@@ -29,31 +42,30 @@ head(rownames(betaValueMatrix))
 head(colnames(betaValueMatrix))
 ```
 
-Counting samples and probes in our data
+- Counting samples and probes in our data
 ```{r, include=TRUE, echo=TRUE}
-samples <- colnames(betaValueMatrix)
-probes <- rownames(betaValueMatrix)
-length(samples)
-length(probes)
+dim(betaValueMatrix)
+nrow(betaValueMatrix)
+ncol(betaValueMatrix)
 ```
 
-Distribution of beta values
+- Distribution of beta values
 ```{r, include=TRUE, echo=TRUE}
 hist(betaValueMatrix, breaks=1000, xlab = "Beta Value ", border = "green", main = "Beta value distribution")
 ```
 
-Names of probes
+- Names of probes
 ```{r, include=TRUE, echo=TRUE}
 head(rownames(betaValueMatrix))
 ```
 
-Annotation that tells the coordinate (in hg19) of each probe and its genomic features
+- Annotation that tells the coordinate (in hg19) of each probe and its genomic features
 ```{r, include=TRUE, echo=TRUE}
 annotate <- getGEO("GPL8490", destdir = "./")
 annotate <- Table(annotate)
 
 annotated_probes <- intersect(annotate$ID, rownames(betaValueMatrix))
-cat("Probes number: ", length(annotated_probes), "\n")
+cat("Number of matching probes: ", length(annotated_probes), "\n")
 
 i <- match(annotated_probes, annotate$ID)
 annotate <- annotate[i, ]
@@ -62,58 +74,399 @@ i <- match(annotated_probes, rownames(betaValueMatrix))
 betaValueMatrix <- betaValueMatrix[i,]
 stopifnot(all(rownames(betaValueMatrix) == annotate$ID))
 
-head(annotate)
+datatable(head(annotate), class = 'cell-border stripe')
 ```
 
-Samples which correspond to healthy individuals, and which samples correspond to the sick ones
+- Samples which correspond to healthy individuals, and which samples correspond to the sick ones
 ```{r, include=TRUE, echo=TRUE}
 sickness <- pData(phenoData(GSE30229[[1]]))
-sickness[1:20,1]
+group <- sickness[,1]
+
+# isgaunam case/control statusa is group kintamojo
+group <- sapply(strsplit(as.character(group), split=" "),
+	'[[', 1)
+group <- as.factor(group)
+table(group)
 ```
+
+- Cell count estimates
+```{r}
+fname <- "GSE30229_cellCounts.csv"
+if (!file.exists(fname)) {
+	require(meffil)
+	estimates <- meffil.estimate.cell.counts.from.betas(betaValueMatrix, 
+		cell.type.reference="blood gse35069", verbose = TRUE)
+	write.csv(estimates, file=fname, row.names=TRUE)	
+}
+estimates <- read.csv(fname)
+head(estimates)
+```
+
 
 ## Step 3
 
-For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+- For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
 
 ```{r, include=TRUE, echo=TRUE}
-controlSamples <- which(sickness$`disease:ch1` == 'control')
-caseSamples <- which(sickness$`disease:ch1` == 'HNSCC case')
-t.test(betaValueMatrix[1,controlSamples], betaValueMatrix[1,caseSamples])
-```
-
-From the t-test, obtain the p value.
-```{r, include=TRUE, echo=TRUE}
-pvalues = c()
-for (i in 1:length(rownames(betaValueMatrix))) {
-     pvalues[i] <- t.test(betaValueMatrix[i,controlSamples], betaValueMatrix[i,caseSamples])$p.value
-     
+# Dabar jau mokam paskaiciuoti su limma
+computeFit <- function() {
+	model <- model.matrix(~ group)
+	fit <- lmFit(betaValueMatrix, model)
+	fit <- eBayes(fit)
+	fit <- topTable(fit, number=nrow(betaValueMatrix), sort.by="none")
+	return(fit)	
 }
-```
-Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
 
-```{r, include=TRUE, echo=TRUE}
-#The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values.
-#The “depth” of the histogram on the right side shows the values that are null.
-hist(pvalues, col = "green", breaks = 100)
+timing <- system.time( { fit <- computeFit() } )
 ```
 
-Performance-wise, how long will it take to compute the test for all probes?
+- From the t-test, obtain the p value.
 ```{r, include=TRUE, echo=TRUE}
-# We used system.time() function to measure the performance. It took 30.100 seconds to perform all the t-tests
+head(fit)
+head(fit$P.Value)
+```
+
+- Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+
+The peak close to 0 is tall, so there are many p-values close to 0 which means that there is a lot of significant values. The "depth" of the histogram on the right side shows the values that are null.
+```{r, include=TRUE, echo=TRUE}
+hist(fit$P.Value, col = "green", breaks = 100)
+```
+
+- Performance-wise, how long will it take to compute the test for all probes?
+
+```{r, echo=TRUE, include=TRUE}
+timing
 ```
 
 ## Step 4
 
-What is multiple hypothesis testing?
+- What is multiple hypothesis testing?
+
+Multiple hypothesis testing occures when we have many different hypotheses and we want to test whether all null hypotheses are true using a single test. Testing them simultaneously increases the chance of getting more "significant" results. Adjustion for multiple hypothesis testing reduces the chances by increasing the needed "significance".
+
+- How should we adjust for multiple hypothesis testing in our case?
+
+For adjustion we chose "BH" method because it controls the proportion of false discovery which is expected among the rejected hypotheses.
+
+There is a simpler method to adjust. Divide p values by the number of tests that have been performed. This is called Bonferroni correction. It is, however, very strict and most likely no porbes will come out significant after this.
+
 ```{r, include=TRUE, echo=TRUE}
-#Kitaip jie dar gali būti vadinami “p-hacking”. Tai statistinių metodų naudojimas tam, kad išgauti geresnius, reikšmingesnius rezultatus. 
-#Yra eksperimentų, kurių duomenyse yra didelis kintamųjų skaičius. Tokie didelio našumo eksperimetai atliekami genetikoje ir image analysis. 
+p_fdr <- p.adjust(fit$P.Value, method="BH")
+p_bonf <- p.adjust(fit$P.Value, method="bonferroni")
+```
 
-#Į šį testavimo būdą įeina:
-#1) skirtumai tarp nulinės ir alternatyvios hipotezės
-#2) reikšmingumo lygiai
-#3) Type I and Type II errors
-#4)p-values
+- Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 
-#Atliekant multiple hypothesis testing mes tikriname individualiai kiekvieną nulinę hipotezę. Kad galėtume atmesti bent kelias nulines hipotezes. 
+We choose that the adjusted p-value is "significant" if its value is below 0.05.
+
+```{r, include=TRUE, echo=TRUE}
+sum(p_fdr < 0.05)
+sum(p_bonf < 0.05)
+```
+
+- Where are these probes? What genes are they related to?
+
+We find what genes the probes are related to and what chromosomes they are located at.
+
+```{r, include=TRUE, echo=TRUE}
+# annotate ir betaValueMatrix yra sutampancios matricos
+i <- which(p_bonf < 0.05)
+unique(as.character(annotate[i, "Symbol"]))
+```
+
+## Next steps
+
+### Normalization
+
+
+```{r, include=TRUE, echo=TRUE}
+normalizedMatrix <- normalizeBetweenArrays(betaValueMatrix)
+```
+
+
+### DNAmAge and sex estimates
+
+Data from [Epigenetic clock](https://dnamage.genetics.ucla.edu)
+
+
+```{r, include=TRUE, echo=TRUE}
+dnamEstimates <- read.csv('GSE30229.csv')
+# Siuose duomenyse nera kraujo lasteliu kompozicijos. Reikia padaryti analize
+# is naujo, pasirenkant "advanced analysis for blood"
+
+# Pasitikrinam, ar matricos vienodai surusiuotos
+stopifnot(all(dnamEstimates$SampleID == colnames(normalizedMatrix)))
+
+# pridedam grupe prie amziaus ir lyties
+dnamEstimates$Group <- group
+
+# rezultatas
+head(dnamEstimates)
+```
+
+Distribution of DNAmAge across sample groups:
+
+
+```{r, include=TRUE, echo=TRUE}
+with(dnamEstimates, boxplot(DNAmAge ~ Group))
+with(dnamEstimates, t.test(DNAmAge ~ Group))
+```
+
+
+### Principal component analysis
+
+Let's look into the PCs of the data as it is
+
+
+```{r, include=FALSE, echo=FALSE}
+# Paslepiam isvedima i HTML
+imputed <- impute.knn(normalizedMatrix)
+```
+
+```{r, include=TRUE, echo=TRUE}
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender))
+```
+
+PCs are heavily influenced by sex. We can test if other parameters are related to any of the PCs.
+
+```{r, include=TRUE, echo=TRUE}
+model <- model.matrix(~ Group + predictedGender + DNAmAge, data=dnamEstimates)
+fit <- lmFit(t(pca$x[, 1:10]), model)
+fit <- eBayes(fit)
+toptable(fit)
+decideTests(fit)
+```
+
+- PCs 1, 3, 5 and 6 are affected by case/control differences
+- PC 1 is affected by sample sex
+- PCs 3, 5 and 6 are affected by sample age
+
+But we should remove sex chromosomes and outliers before we make any conclusions...
+
+### Remove sex chromosomes
+
+```{r, include=TRUE, echo=TRUE}
+sexProbes <- which(annotate$Chr %in% c("X", "Y"))
+```
+
+Do imputation again
+
+```{r, include=FALSE, echo=FALSE}
+# Paslepiam isvedima i HTML
+imputed <- impute.knn(normalizedMatrix[-sexProbes,])
+```
+
+Perform PCA again
+
+```{r, include=TRUE, echo=TRUE}
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender))
+```
+
+- There are some obvious outliers that should be removed before we proceed.
+
+### Remove outliers
+
+
+Mark as outliers those samples that are further than 3 SD away from the 
+mean of first and second PCs.
+
+```{r, include=TRUE, echo=TRUE}
+
+# !!!! There is a bug here!
+# pca_first <- pca
+# out1 <- which(abs(pca_first$x[,1]) > 3*sd(abs(pca_first$x[,1])))
+# out2 <- which(abs(pca_first$x[,2]) > 3*sd(abs(pca_first$x[,2])))
+# outs <- union(out1, out2)
+# outs
+
+# Corrected version:
+out1 <- abs(pca$x[,1] - mean(pca$x[,1])) > 3*sd(pca$x[,1])
+out2 <- abs(pca$x[,2] - mean(pca$x[,2])) > 3*sd(pca$x[,2])
+outs <- which(out1 | out2)
+```
+
+### PCA after removal of outliers and sex chromosome probes
+
+First, we normalize the data again, because sex probes and outliers 
+influenced the normalization
+
+```{r, include=TRUE, echo=TRUE}
+normalizedMatrix <- normalizeBetweenArrays(betaValueMatrix[-sexProbes, -outs])
+```
+
+Next, we impute missing values
+
+```{r, include=FALSE, echo=FALSE}
+# Paslepiam isvedima i HTML
+imputed <- impute.knn(normalizedMatrix)
+```
+
+Now, we can run PCA
+
+```{r, include=TRUE, echo=TRUE}
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(dnamEstimates$predictedGender[-outs]))
+```
+
+And test which PCs are influenced by known variables
+
+```{r, include=TRUE, echo=TRUE}
+# cellCounts <- read.csv("./GSE30229_cellCounts.csv")
+stopifnot(all(dnamEstimates$SampleID == estimates$X))
+dnamEstimates$Bcell <- estimates$Bcell
+dnamEstimates$CD4T <- estimates$CD4T
+dnamEstimates$CD8T <- estimates$CD8T
+dnamEstimates$Gran <- estimates$Gran
+dnamEstimates$Mono <- estimates$Mono
+dnamEstimates$NK <- estimates$NK
+
+model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])
+fit <- lmFit(t(pca$x[, 1:10]), model)
+fit <- eBayes(fit)
+toptable(fit)
+decideTests(fit)
+```
+
+This time, the first and third principal components are related to differences between groups. Let's visualize.
+
+
+```{r}
+plot(pca$x[,1], pca$x[,3], col=as.factor(dnamEstimates$Group[-outs]))
+```
+
+```{r}
+boxplot(pca$x[,1] ~ as.factor(dnamEstimates$Group[-outs]))
+```
+
+This is advanced stuff. We are going to fit two generalized (binomial) linear models, i.e. models that explain a binary variable based on numeric input. The first model uses PC1, PC3 and DNAmAge. The second, or the null, model uses only DNAmAge to explain the outcome (healthy/control). Then we use ANOVA to test whether the two tests are significantly different. Under null hypothesis, the two tests are the same and, therefore, the PC1 and PC3 bear no additional information when predicting diagnosis. Under alternative hypothesis, the two PCs improve our predictive power.
+
+```{r}
+model <- glm(as.factor(Group) ~ pca$x[,1] + pca$x[,3] + DNAmAge, data=dnamEstimates[-outs,], family="binomial")
+model0 <- glm(as.factor(Group) ~ DNAmAge, data=dnamEstimates[-outs,], family="binomial")
+anova(model0, model, test="Chisq")
+```
+
+Hooray! The principal components are predictive of diagnosis!
+
+
+### Test each probe for differences
+
+```{r, include=TRUE, echo=TRUE}
+# Perrasau sena gera computeFit funkcija
+computeFit <- function(permute = FALSE) {
+	if (!permute) {
+		model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])
+	} else {
+		model <- model.matrix(~ sample(Group) + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=dnamEstimates[-outs,])		
+	}
+	fit <- lmFit(imputed$data, model)
+	fit <- eBayes(fit)
+	# coef=2 labai svarbu
+	# jis nurodo, kad mes ziurime i grupes skirtumus,
+	# atmesdami kitu kintamuju efekta
+	fit <- topTable(fit, coef=2, number=nrow(imputed$data), sort.by="none")
+	return(fit)	
+}
+
+fit <- computeFit()
+```
+
+Histogram of P values
+
+```{r}
+hist(fit$P.Value, breaks=1000)
+```
+
+Number of significant probes
+
+```{r}
+cat("Fraction with p < 0.05 ", mean(fit$P.Value < 0.05), "\n")
+cat("Total FDR q < 0.05 ", sum(p.adjust(fit$P.Value, "fdr") < 0.05), "\n")
+```
+
+
+Permutations 
+
+```{r, include=TRUE, echo=TRUE}
+set.seed(123)
+n <- 100
+observed <- mean(fit$P.Value < 0.05)
+#Zemiau yra greitesnis kodas...
+# expected <- numeric(n)
+# for (i in 1:n) {
+#   permutedFit <- computeFit(permute = TRUE)
+#   expected[i] <- mean(permutedFit$P.Value < 0.05)
+# }
+```
+
+
+The same permutations but distributed across multiple processors for speed
+
+```{r, include=FALSE, echo=FALSE}
+# reikalingos bibliotekos!
+require(doSNOW)
+require(foreach)
+
+# Sita funkcija paleidzia atskirus R procesus, nukopijuoja i 
+# juos duomenis ir paleidzia skaiciuoti paraleliai. 
+CLUSTER <- NULL
+withCluster <- function(action, outfile="", nNodes=0) {
+	require(doSNOW)
+	if (nNodes == 0) {
+	    nodefile <- Sys.getenv("PBS_NODEFILE")
+	    hosts <- readLines(nodefile)
+	} else {
+	    hosts <- rep("localhost", nNodes)
+	}
+    message(sprintf("Starting cluster on %s", paste(hosts, collapse=", ")))
+    CLUSTER <<- makeCluster(hosts, type="SOCK", outfile=outfile)		
+    registerDoSNOW(CLUSTER)
+    clusterSetupRNG(CLUSTER)
+    tryCatch(action, finally={
+        message("Stopping cluster")
+        registerDoSEQ()
+        stopCluster(CLUSTER)
+        CLUSTER <<- NULL
+    })
+}
+
+expected <- withCluster(
+	foreach(i = 1:n, 
+		.combine=c) %dopar% {
+		
+		require(limma)
+		permutedFit <- computeFit(permute = TRUE)
+		mean(permutedFit$P.Value < 0.05)
+	}, 
+	nNodes=6
+)
+
+```
+
+Now test how likely it is to see so many significant probes in randomly shuffled data.
+
+```{r}
+p <- mean(expected > observed)
+hist(expected, breaks=20, main=paste("The test p =", p))
+abline(v=observed, col="red")
+```
+
+### Final list of significant probes
+
+```{r, include=TRUE, echo=FALSE}
+interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
+res <- cbind(fit, annotate[-sexProbes, interestingColumns])
+i <- which(res$P.Value < 0.05)
+res <- res[i,]
+o <- order(res$P.Value)
+res <- res[o,]
+datatable(res, class = 'cell-border stripe', options = list(
+  searching = TRUE,
+  pageLength = 5,
+  lengthMenu = c(5, 10, 15, 20),
+  scrollX = TRUE
+))
 ```
