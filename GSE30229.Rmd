@@ -368,7 +368,8 @@ computeFit <- function(permute = FALSE) {
 	# jis nurodo, kad mes ziurime i grupes skirtumus,
 	# atmesdami kitu kintamuju efekta
 	fit <- topTable(fit, coef=2, number=nrow(imputed$data), sort.by="none")
-	return(fit)	
+	return(fit)
+	#return(fit$P.Value < 0.05)
 }
 
 fit <- computeFit()
@@ -388,18 +389,16 @@ cat("Total FDR q < 0.05 ", sum(p.adjust(fit$P.Value, "fdr") < 0.05), "\n")
 ```
 
 
-Permutations 
+### Permutations 
 
 ```{r, include=TRUE, echo=TRUE}
 set.seed(123)
 n <- 100
-observed <- mean(fit$P.Value < 0.05)
-#Zemiau yra greitesnis kodas...
-# expected <- numeric(n)
-# for (i in 1:n) {
-#   permutedFit <- computeFit(permute = TRUE)
-#   expected[i] <- mean(permutedFit$P.Value < 0.05)
-# }
+#observed <- mean(fit$P.Value < 0.05)
+#observed <- computeFit()
+observed <- fit$P.Value < 0.05
+table(observed)
+
 ```
 
 
@@ -433,75 +432,116 @@ withCluster <- function(action, outfile="", nNodes=0) {
     })
 }
 
+#expected <- withCluster(
+#	foreach(i = 1:n, 
+#		.combine=c) %dopar% {
+#		
+#		require(limma)
+#		permutedFit <- computeFit(permute = TRUE)
+#		mean(permutedFit$P.Value < 0.05)
+#		
+#	}, 
+#	nNodes=6
+#)
+
+#expected <- c()
+#for (i in 1:n) {
+#  cat(i, "\n")
+#  expected <- cbind(expected, fit$P.Value< 0.05)
+#  permutedFit <- computeFit(permute=TRUE)$P.Value < 0.05
+#  expected_mean <- mean(permutedFit)
+#}
+
 expected <- withCluster(
-	foreach(i = 1:n, 
-		.combine=c) %dopar% {
-		
-		require(limma)
-		permutedFit <- computeFit(permute = TRUE)
-		mean(permutedFit$P.Value < 0.05)
-	}, 
-	nNodes=6
+ foreach(i = 1:n, .combine=cbind) %dopar% {
+       
+        require(limma)
+        cat(i, "\n")
+        #expected <- cbind(expected, fit$P.Value< 0.05)
+        #permutedFit <- 
+        computeFit(permute=TRUE)$P.Value < 0.05
+        #expected_mean <- mean(permutedFit)
+    }, 
+ nNodes=6
 )
-
 ```
 
-Now test how likely it is to see so many significant probes in randomly shuffled data.
-
+Issaugome musu expected true/false lentele ir observed stulpeli i csv failus, kad kiti galetu pasinaudoti
 ```{r}
-p <- mean(expected > observed)
-hist(expected, breaks=20, main=paste("The test p =", p))
-abline(v=observed, col="red")
+write.csv(expected, "GSE30229_expected.csv")
+write.csv(observed, "GSE30229_observed.csv")
 ```
 
-### Final list of significant probes
+Pasikrauname expected ir observed is GSE19711 ir pasaliname nereikalinga rownames stulpeli, kuris kartojasi
+```{r}
+expected2 <- as.matrix(read.csv("GSE19711_expected.csv"))
+observed2 <- read.csv("GSE19711_observed.csv")
+expected2 <- expected2[,-1]
+observed2 <- observed2[,2]
+```
 
+Tas pats su GSE50409
+```{r}
+expected3 <- as.matrix(read.csv("GSE50409_expected.csv"))
+observed3 <- read.csv("GSE50409_observed.csv")
+expected3 <- expected3[,-1]
+observed3 <- observed3[,2]
+```
+
+Pasikrauname paskutini data kintamaji is kitu datasetu
+```{r}
+matrix30229 <- imputed$data 
+matrix19711 <- read.csv("GSE19711_matrix.csv")
+matrix50409 <- read.csv("GSE50409_matrix.csv")
+```
+
+Randame sutampanciu tarp visu datasetu, probu ID sarasa.
+```{r}
+matching_ids <- intersect(intersect(rownames(matrix30229), matrix19711$X), matrix50409$X)
+```
+
+Taikome match funkcija tam, kad gauti atitinkamus eiluciu numerius ir suvienodinti expected ir observed dimensijas
+```{r}
+idx1 <- na.omit(match(matching_ids, rownames(imputed$data)))
+expected <- expected[idx1,]
+observed <- observed[idx1]
+
+idx2 <- na.omit(match(matching_ids, matrix19711$X))
+expected2 <- expected2[idx2,]
+observed2 <- observed2[idx2]
+
+idx3 <- na.omit(match(matching_ids, matrix50409$X))
+expected3 <- expected3[idx3,]
+observed3 <- observed[idx3]
+```
+
+Gauname expected ir observed sumas
+```{r}
+ res <- c()
+for (i in 1:n)
+  res[i] <- sum(expected[,i] & expected2[,i] & expected3[,i])
+res
+
+observed_sum <- sum( (observed & observed2) & observed3 )
+observed_sum
+```
+
+Galutinio rezultato histograma
 ```{r, include=TRUE, echo=FALSE}
-interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
-res <- cbind(fit, annotate[-sexProbes, interestingColumns])
-i <- which(res$P.Value < 0.05)
-res <- res[i,]
-o <- order(res$P.Value)
-res <- res[o,]
-datatable(res, class = 'cell-border stripe', options = list(
-  searching = TRUE,
-  pageLength = 5,
-  lengthMenu = c(5, 10, 15, 20),
-  scrollX = TRUE
-))
-```
+mean(res >= observed_sum)
+hist(res, breaks = 100)
+abline(v=observed_sum, col="red")
 
-### Comparing significant probes from all datasets
-```{r}
-first <- read.csv("GSE30229_results.csv")
-first <- first[[1]]
-second <- read.csv("GSE19711_results.csv")
-second <- second[[1]]
-third <- read.csv("GSE50409_results.csv")
-third <- third[[1]]
-```
-
-Creating table of all probes  ID and FALSE value for dataset columns as default
-
-```{r}
-comparing_table <- data.frame(ID = annotate$ID, GSE_30229 = FALSE, GSE_19711 = FALSE, GSE_50409 = FALSE)
-```
-
-With match function table is modified, significant probes are compared
-
-```{r}
-id_30229 <- match(first, comparing_table$ID)
-comparing_table[id_30229,2] <- TRUE
-id_19711 <- match(second, comparing_table$ID)
-comparing_table[id_19711,3] <- TRUE
-id_50409 <- match(third, comparing_table$ID)
-comparing_table[id_50409,4] <- TRUE
-```
-
-Fisher test between significant probes of each dataset
-
-```{r}
-fisher.test(table(comparing_table$GSE_30229, comparing_table$GSE_19711))
-fisher.test(table(comparing_table$GSE_30229, comparing_table$GSE_19711))
-fisher.test(table(comparing_table$GSE_19711, comparing_table$GSE_50409))
+#interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
+#res <- cbind(fit, annotate[-sexProbes, interestingColumns])
+#i <- which(res$P.Value < 0.05)
+#res <- res[i,]
+#o <- order(res$P.Value)
+#res <- res[o,]
+#datatable(res, class = 'cell-border stripe', options = list(
+#  searching = TRUE,
+#  pageLength = 5,
+#  lengthMenu = c(5, 10, 15, 20),
+#  scrollX = TRUE
+#))
 ```

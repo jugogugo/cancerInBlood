@@ -16,6 +16,9 @@ output: html_document
 ```{r setup, echo=FALSE, include=FALSE}
 library(GEOquery)
 library(data.table)
+library(impute)
+library(limma)
+library(DT)
 ```
 
 - Automatically download the data from GEO
@@ -68,7 +71,26 @@ annotation <- Table(annotation)
 
 # Now match the rows in annotation that are present in our data
 commonProbes <- intersect(annotation$ID, rownames(matrix))
-cat("Number of probes for which hg19 annotation is available: ", length(commonProbes), "\n")
+```
+Number of probes for which hg19 annotation is available: `r length(commonProbes)`
+
+
+- Cell count estimates
+```{r}
+fname <- "GSE50409_cellCounts.csv"
+if (!file.exists(fname)) {
+	require(meffil)
+	estimates <- meffil.estimate.cell.counts.from.betas(matrix, 
+		cell.type.reference="blood gse35069", verbose = TRUE)
+	write.csv(estimates, file=fname, row.names=TRUE)	
+}
+estimates <- read.csv(fname)
+head(estimates)
+```
+
+
+
+```{r}
 
 i <- match(commonProbes, annotation$ID)
 annotation <- annotation[i, ]
@@ -84,5 +106,187 @@ head(annotation)
 
 ```{r}
 disease <- pData(phenoData(gse50409[[1]]))
-disease[1:20,1]
+as.character(disease[1:20,1])
+```
+- For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups.
+
+```{r}
+sick <- which(disease$source_name_ch1 == "Bladder cancer case")
+control <- which(disease$source_name_ch1 != "Bladder cancer case")
+t.test(matrix[1,control], matrix[1,sick])
+```
+- From the t-test, obtain the p value.
+```{r}
+pvals <- apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value})
+hist(pvals)
+observed <- mean(pvals < 0.05)
+
+
+set.seed(123)
+## >>> PG: groups wasn't defined (created dummy object)
+groups <- sample(0:1, ncol(matrix), replace = TRUE)
+expected <- numeric(100)
+## >>> PG: decreased number of permutations
+for (iteration in 1:2) {
+    groupsRandom <- sample(groups)
+    pvalsRandom <- apply(matrix[1:1000,],1,function(x) {t.test(x ~ groupsRandom)$p.value})
+    expected[iteration] <- mean(pvalsRandom < 0.05)
+    print(iteration)
+}
+
+hist(expected, xlim=c(0, 0.5), xlab="Expected fraction of significant probes")
+abline(v=observed, col="red")
+mean(observed < expected)
+
+```
+
+- Plot the distribution of p values. What is the expected distribution? How dows it differ from what you get?
+```{r out.width = '100%'}
+hist(pvals, breaks = 1000)
+#The p-value graph should be distributed around zero. What we got appears to be the expected result, because in the graph it is clear that frequency of probes with p-value zero or very close to it is the highest, while the frequency of probes with bigger p-value plummets extremely.
+```
+- Performance-wise, how long will it take to compute the test for all probes?
+```{r}
+system.time(apply(matrix,1,function(x) {t.test(x[sick],x[control])$p.value}))
+```
+
+- What is multiple hypothesis testing?  
+
+Using and manipulating statistical methods it is more likely to get “significant” data. Due to that, Type 1 Error can occur more often , when we reject correct null hypothesis.
+
+- How should we adjust for multiple hypothesis testing in our case?
+```{r}
+pvals.adjusted <- p.adjust(pvals, method="BH", n = length(pvals))
+# We are using BH/FDR (correction method of Benjamini and Hochberg) correction. This lets us control the false discovery rate, the expected proportion of false discoveries amongst the rejected hypotheses.
+```
+- Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
+```{r}
+pvals.significant <- pvals.adjusted[pvals.adjusted < 0.05]
+names(pvals.significant)
+```
+- Where are these probes? What genes are they related to?
+```{r}
+# UCSC Gene symbols
+annotation$UCSC_RefGene_Name[match(names(pvals.significant), annotation$ID)]
+# Chromosomes and coordinates
+annotation$UCSC_CpG_Islands_Name[match(names(pvals.significant), annotation$ID)]
+```
+- NEXT STEPS
+- Normalizavimas, kvantiliu normalizacija
+```{r}
+normalized <- normalizeBetweenArrays(matrix)
+```
+- PCA
+```{r out.width = '100%'}
+ageSex <- read.csv("./GSE50409_agesexMatrix.csv")
+stopifnot(all(ageSex$SampleID == colnames(normalized)))
+imputed <- impute.knn(normalized)
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(ageSex$predictedGender))
+```
+- Reikia atmesti lytiniu chromosomu probus
+```{r out.width = '100%'}
+sexProbes <- which(annotation$CHR %in% c("X", "Y"))
+imputed <- impute.knn(normalized[-sexProbes,])
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(ageSex$predictedGender))
+```
+- Some samples could be outliers messing up our results. How to detect outliers?
+Outlier'iai yra surandami iš pca x reikšmių atėmus vidurkius ir paėmus gauto skaičiaus modulį. Jį palyginame su standartiniu nuokrypiu padaugintu iš 3. Jeigu mūsų gautas skaičius yra didesnis negu standartinis nuokrypis padaugintas iš 3, laikome šį tašką outlieriu. 
+```{r}
+out1 <- abs(pca$x[,1] - mean(pca$x[,1])) > 3*sd(pca$x[,1])
+out2 <- abs(pca$x[,2] - mean(pca$x[,2])) > 3*sd(pca$x[,2])
+outs <- which(out1 | out2)
+```
+- Normalizacija
+```{r}
+normalized <- normalizeBetweenArrays(matrix[-sexProbes, -outs])
+```
+Atvaizduojame normalizuotą matricą, panaikinus outlierių taškus, bei lytinių chromosomų probus.
+```{r}
+imputed <- impute.knn(normalized)
+pca <- prcomp(t(imputed$data), scale=FALSE)
+pairs(pca$x[,1:4], col=as.factor(ageSex$predictedGender))
+```
+- Thousands of t-tests can be computed at once within seconds. How? limma
+```{r out.width = '100%'}
+group <- as.factor(as.character(disease$source_name_ch1))
+ageSex$Group <- group
+cellCounts <- read.csv("./GSE50409_cellCounts.csv")
+stopifnot(all(ageSex$SampleID == cellCounts$X))
+ageSex$Bcell <- cellCounts$Bcell
+ageSex$CD4T <- cellCounts$CD4T
+ageSex$CD8T <- cellCounts$CD8T
+ageSex$Gran <- cellCounts$Gran
+ageSex$Mono <- cellCounts$Mono
+ageSex$NK <- cellCounts$NK
+model <- model.matrix(~Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK , data=ageSex[-outs,])
+fit <- lmFit(t(pca$x[, 1:10]), model)
+fit <- eBayes(fit)
+toptable(fit)
+decideTests(fit)
+plot(pca$x[,1], pca$x[,3], col=as.factor(ageSex$Group[-outs]))
+boxplot(pca$x[,1] ~ as.factor(ageSex$Group[-outs]))
+```
+```{r}
+computeFit <- function(permute = FALSE) {
+	if (!permute)
+	{
+		model <- model.matrix(~ Group + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=ageSex[-outs,])
+	}
+  else
+  {
+	  model <- model.matrix(~ sample(Group) + predictedGender + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=ageSex[-outs,])	
+	}
+	fit <- lmFit(imputed$data, model)
+	fit <- eBayes(fit)
+	fit <- topTable(fit, coef=2, number=nrow(imputed$data), sort.by="none")
+	return(fit)	
+}
+
+fit <- computeFit()
+```
+```{r out.width = '100%'}
+#Histogram of p-values
+hist(fit$P.Value, breaks=1000)
+```
+- Permutations
+```{r}
+set.seed(123)
+n <- 100
+
+#observed <- mean(fit$P.Value < 0.05)
+observed <- fit$P.Value < 0.05
+table(observed)
+
+#expected <- numeric(n)
+expected <- c()
+for (i in 1:n){
+  cat(i, "\n")
+  expected <- cbind(expected, computeFit(permute = TRUE)$P.Value < 0.05)
+  #permutedFit <- computeFit(permute = TRUE)$P.Value < 0.05
+  #expected[i] <- mean(permutedFit$P.Value < 0.05)
+}
+
+write.csv(imputed$data, "GSE50409_matrix.csv")
+write.csv(expected, "GSE50409_expected.csv")
+write.csv(observed, "GSE50409_observed.csv")
+#p <- mean(expected > observed)
+#hist(expected, breaks=20, main=paste("The test p =", p))
+#abline(v=observed, col="red")
+```
+```{r}
+interestingColumns <- c("ID", "CHR", "MAPINFO", "UCSC_RefGene_Name", "UCSC_CpG_Islands_Name")
+res <- cbind(fit, annotation[-sexProbes, interestingColumns])
+i <- which(res$adj.P.Val < 0.05)
+res <- res[i,]
+o <- order(res$P.Value)
+res <- res[o,]
+datatable(res, class = 'cell-border stripe', options = list(
+  searching = TRUE,
+  pageLength = 5,
+  lengthMenu = c(5, 10, 15, 20),
+  scrollX = TRUE
+))
+
 ```
