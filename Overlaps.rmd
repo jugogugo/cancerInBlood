@@ -1,0 +1,62 @@
+---
+title: "combinedAnalysis"
+output: html_document
+---
+
+# Authors
+
+
+- Rimvydas Noreika
+- Tautminas Cibulskis
+- Gabrielius Erignis
+- Rolandas Porejus
+
+
+# Overlaps
+
+```{r, echo=FALSE, include=FALSE}
+library(DT)
+library(data.table)
+
+knitr::opts_chunk$set(echo=TRUE, include=TRUE)
+```
+
+Load
+
+```{r}  
+observed1 <- readRDS("GSE19711_fit.RDS")
+expected1 <- readRDS("GSE19711_perm.RDS")
+
+observed2 <- readRDS("GSE30229_fit.RDS")
+expected2 <- readRDS("GSE30229_perm.RDS")
+
+observed3 <- readRDS("GSE50409_fit.RDS")
+expected3 <- readRDS("GSE50409_perm.RDS")
+```
+
+Once we have analysis of all three datasets, we pull them all together and make conclusions
+
+```{r}
+n=100
+exp_overlaps <- c()
+for (i in 1:n){
+  exp_overlaps[i] <- sum((expected1[,i] & expected2[,i]) & expected3[,i])
+}
+obs_overlaps <- sum((observed1[,1] & observed2[,1]) & observed3[,1])
+
+```
+
+Rasti persidengimai:
+
+```{r}
+obs_overlaps
+```
+
+Tiketini persidengimai:
+
+```{r}
+exp_overlaps
+
+hist(exp_overlaps, breaks=20)
+abline(v=obs_overlaps, col="red")
+```

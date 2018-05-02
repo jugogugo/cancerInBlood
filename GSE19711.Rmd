@@ -100,10 +100,6 @@ head(estimates)
 
 For each probe compute a t-test to verify if the distributions of beta values within the probe significantly differ between the two groups. From the t-test, obtain the p value.
 ```{r}
-# JG> I remove namearray variable and assign probe names to pvalarray as a property
-# JG> Also note that in R <- is an assignment operator
-# JG> And we can do the next task in the same code chunk saving computation time
-
 computeFits <- function() {
   pvalarray <- array()
   for (i in 1:nrow(gsetexpr)){
@@ -112,7 +108,6 @@ computeFits <- function() {
     tt = t.test(case, control)
     pvals <- tt$p.value
     pvalarray[i] = tt$p.value
-    # namearray[i] = probeset[i] 
   }
   names(pvalarray) <- rownames(gsetexpr)
   return (pvalarray)
@@ -137,13 +132,6 @@ Performance-wise, how long will it take to compute the test for all probes?
 
 
 ```{r}
-# JG> result comes from above
-# system.time( for (i in 1:length(probeset)){
-#   case = gsetexpr[i, grep("Case", study$`sample type:ch1`)]
-#   control = gsetexpr[i, grep("Control", study$`sample type:ch1`)]
-#   tt = t.test(case, control)
-#   pvalarray[i] = tt$p.value
-# })
 time
 ```
 What is multiple hypothesis testing? Such testing means that we are trying to check validity of a number of hypotheses simultaneausly. However, as the number of hypotheses increases, o does the chance for observing at least one significant result by chance. In order to reduce the impact of this isssue, it is important to adjust for multiple hypothesis testing, so observing a significant result by chance is below our chosen significance level.
@@ -165,9 +153,6 @@ The p-values should be adjusted using "adjust" funtion. It is important to choos
 Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 ```{r}
 pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.05]
-# JG>
-# namearray.significant <- namearray[pvalarray.adjusted < 0.05]
-# namearray.significant [1:20]
 ```
 In this case we define smaller than 0.05 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed.
 
@@ -175,26 +160,15 @@ Where are these probes? What genes are they related to?
 
 -Did you find any probes that show statistically significant modification difference between healthy and sick individuals?
 ```{r}
-# JG> 
-# pvalarray.significant <- pvalarray.adjusted[pvalarray.adjusted < 0.04]
-# namearray.significant <- namearray[pvalarray.adjusted < 0.04]
-# namearray.significant [1:20]
-namearray.significant <- names(pvalarray)[pvalarray.adjusted < 0.04]
+namearray.significant <- names(pvalarray)[pvalarray.adjusted < 0.05]
 length(pvalarray.significant)
 ```
-In this case we define smaller than 0.04 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed. 
+In this case we define smaller than 0.05 adjusted pvalue as "significant". The variables which are within this criteria are chosen and their names are printed. 
 
 -Where are these probes? What genes are they related to?
 
 ```{r}
-# JG> CpG Islands are a very interesting thing, but what is your intention here?
-# genes <- annotation$Gene_ID[match(namearray.significant, annotation$ID)]
-# location <- annotation$CPG_ISLAND_LOCATIONS[match(namearray.significant, annotation$ID)]
-# genes [1:20]
-# location [1:20]
-# head(annotation)
-# JG> this is the simplest approach
-annotation[annotation$ID %in% namearray.significant, ]
+annotation$Symbol[match(names(pvalarray.significant), annotation$ID)]
 ```
 We should find genes and then chromosomes (where probes are located). We do so by matching the names of adjusted pvalues and annotation IDs.
 
@@ -238,8 +212,7 @@ data711$Mono <- cellCounts$Mono
 data711$NK <- cellCounts$NK
 ```
 
-Imputation using k-nearest neighbors algorithm. We need to replace missing data with substituted values.
-In this algorithm missing data is imputed based on the mean of non-missing values of the neighbors.
+Imputation using k-nearest neighbors algorithm. We need to replace missing data with substituted values. In this algorithm missing data is imputed based on the mean of non-missing values of the neighbors.
 
 ```{r, results="hide"}
 imputed <- impute.knn(normmat)
@@ -249,39 +222,14 @@ PCA before removal of outliers and sex chromosome probes
 
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
-#JG> all samples are male, therefore, this is not really useful...
-pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
-#JG> but you can see many outliers
-```
 
-<!-- Performing t-tests, seeing which principal components are affected by control group, DNAmAge and blood cell composition data -->
-
-```{r}
-# JG> this is useless now
-# model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711)
-# fit <- lmFit(t(pca$x[, 1:10]), model)
-# fit <- eBayes(fit)
-# toptable(fit)
-# decideTests(fit)
+pairs(pca$x[,1:4], col=as.factor(data711$Group))
 ```
 
 Selecting sex chromosome probes
 
 ```{r}
 sexProbes <- which(annotation$Chr %in% c("X", "Y"))
-```
-
-<!-- Impute without sex chromosome probes -->
-
-```{r, results="hide"}
-# imputed <- impute.knn(normmat[-sexProbes,])
-```
-
-<!-- PCA after removal of sex chromosome probes -->
-
-```{r}
-# pca <- prcomp(t(imputed$data), scale=FALSE)
-# pairs(pca$x[,1:4], col=as.factor(data711$predictedGender))
 ```
 
 Some samples could be outliers messing up our results. How to detect outliers?
@@ -309,7 +257,6 @@ PCA after removal of outliers and sex chromosome probes
 
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
-#JG> LEt's color by group
 
 pairs(pca$x[,1:4], col=as.factor(data711$Group[-outs]))
 ```
@@ -320,7 +267,7 @@ Performing t-tests after removal of outliers, seeing which principal components 
 model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data = data711[-outs,])
 fit <- lmFit(t(pca$x[, 1:10]), model)
 fit <- eBayes(fit)
-toptable(fit, coef=2)
+topTable(fit, coef=2)
 decideTests(fit)
 ```
 
@@ -357,7 +304,7 @@ Permutations!!
 ```{r}
 set.seed(123)
 n = 100
-observed = mean(fit$P.Value < 0.05)
+observed = mean(fit$P.Value < 0.05) 
 #expected = numeric(n)
 #for(iteration in 1:n){
 #  permutedFit <- computeFit(permute = TRUE)
@@ -415,8 +362,6 @@ abline(v=observed, col="red")
 
 JG> This result shows that the possibility to obtain so many probes with p < 0.05 is very small, that is, `r p`.
 
-Result: changed probes
-
 ```{r, echo=FALSE}
 interestingColumns <- c("ID", "Chr", "MapInfo", "Symbol", "Distance_to_TSS", "CPG_ISLAND")
 res <- cbind(fit, annotation[-sexProbes, interestingColumns])
@@ -425,4 +370,44 @@ res <- res[i,]
 o <- order(res$P.Value)
 res <- res[o,]
 datatable(res, class = 'cell-border stripe')
+```
+
+Preparing for overlap analysis
+
+```{r}
+set.seed(123)
+n <- 100
+
+computeFit <- function(permute = FALSE) {
+	if (!permute) {
+		model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=data711[-outs,])
+	} else {
+		model <- model.matrix(~ sample(Group) + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=data711[-outs,])		
+	}
+	fit <- lmFit(imputed$data, model)
+	fit <- eBayes(fit)
+	fit <- topTable(fit, coef=2, number=nrow(imputed$data), sort.by="none")
+  return(fit$P.Value < 0.05)    
+}
+
+observed1 <- cbind(computeFit(permute = FALSE))
+head(observed1)
+table(observed1)
+
+expected1 <- c()
+expected1 <- withCluster(
+	foreach(i = 1:n, .combine=cbind) %dopar% {
+		require(limma)
+		computeFit(permute=TRUE)
+	}, 
+	nNodes=6
+)
+table(expected1)
+```
+
+Save Results
+
+```{r}
+saveRDS(observed1, file = "GSE19711_fit.RDS")
+saveRDS(expected1, file = "GSE19711_perm.RDS")
 ```
