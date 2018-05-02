@@ -117,6 +117,7 @@ time <- system.time({
   pvalarray <- computeFits()
 })
 
+
 head(pvalarray)
 summary(pvalarray)
 ```
@@ -128,6 +129,7 @@ We get Anti-conservative p-values. All null p-values form a flat distribution. P
 hist(pvalarray, breaks = 100)
 ```
 Performance-wise, how long will it take to compute the test for all probes?
+
 
 ```{r}
 time
@@ -221,6 +223,7 @@ PCA before removal of outliers and sex chromosome probes
 ```{r}
 pca = prcomp(t(imputed$data), scale=FALSE)
 
+pairs(pca$x[,1:4], col=as.factor(data711$Group))
 ```
 
 Selecting sex chromosome probes
@@ -301,7 +304,7 @@ Permutations!!
 ```{r}
 set.seed(123)
 n = 100
-observed = mean(fit$P.Value < 0.05)
+observed = mean(fit$P.Value < 0.05) 
 #expected = numeric(n)
 #for(iteration in 1:n){
 #  permutedFit <- computeFit(permute = TRUE)
@@ -369,125 +372,42 @@ res <- res[o,]
 datatable(res, class = 'cell-border stripe')
 ```
 
-Once we have analysis of all three datasets, can we pull them all together and make conclusions?
+Preparing for overlap analysis
 
 ```{r}
 set.seed(123)
 n <- 100
 
-computeFit <- function(permute = FALSE, bvals, cases) {
-    if (!permute) {
-        model <- model.matrix(~ cases)
-    } else {
-        model <- model.matrix(~ sample(cases))        
-    }
-    fit <- lmFit(bvals, model)
-    fit <- eBayes(fit)
-    fit <- topTable(fit, coef=2, number=nrow(bvals), sort.by="none")
-    return(fit$P.Value < 0.05)    
+computeFit <- function(permute = FALSE) {
+	if (!permute) {
+		model <- model.matrix(~ Group + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=data711[-outs,])
+	} else {
+		model <- model.matrix(~ sample(Group) + DNAmAge + Bcell + CD4T + CD8T + Gran + Mono + NK, data=data711[-outs,])		
+	}
+	fit <- lmFit(imputed$data, model)
+	fit <- eBayes(fit)
+	fit <- topTable(fit, coef=2, number=nrow(imputed$data), sort.by="none")
+  return(fit$P.Value < 0.05)    
 }
 
-
-observed1 <- cbind(computeFit(permute = FALSE, bvals = gsetexpr, cases = group))
+observed1 <- cbind(computeFit(permute = FALSE))
 head(observed1)
 table(observed1)
-```
-
-Getting GSE30229 data 
-
-```{r, include=FALSE, echo=TRUE}
-GSE30229 <- getGEO("GSE30229", destdir = "./")
-```
-```{r}
-betaValueMatrix <- exprs(GSE30229[[1]])
-sickness <- pData(phenoData(GSE30229[[1]]))
-group2 <- sickness[,1]
-
-# isgaunam case/control statusa is group kintamojo
-group2 <- sapply(strsplit(as.character(group2), split=" "),
-    '[[', 1)
-group2 <- as.factor(group2)
-observed2 <- cbind(computeFit(permute = FALSE, bvals = betaValueMatrix, cases = group2))
-head(observed2)
-table(observed2)
-```
-
-Getting gse50409 data 
-
-```{r, include=FALSE, echo=TRUE}
-gse50409 <- getGEO("gse50409", destdir="./")
-```
-```{r}
-matrix <- exprs(gse50409[[1]])
-disease <- pData(phenoData(gse50409[[1]]))
-group3 <- as.factor(as.character(disease$source_name_ch1))
-observed3 <- cbind(computeFit(permute = FALSE, bvals = matrix, cases = group3))
-head(observed3)
-table(observed3)
-```
-
-Dealing with expected values, generating permutations for all datasets:
-
-```{r}
-# Permutacijos is sio dataseto
 
 expected1 <- c()
-#exptest = expected1
 expected1 <- withCluster(
 	foreach(i = 1:n, .combine=cbind) %dopar% {
 		require(limma)
-		computeFit(permute=TRUE, bvals = gsetexpr, cases = group)
+		computeFit(permute=TRUE)
 	}, 
 	nNodes=6
 )
 table(expected1)
-
-# Permutacijos is GSE30229 dataseto 
-expected2 <- c()
-expected2 <- withCluster(
-	foreach(i = 1:n, .combine=cbind) %dopar% {
-		require(limma)
-		computeFit(permute=TRUE, bvals = betaValueMatrix, cases = group2)
-	}, 
-	nNodes=6
-)
-table(expected2)
-
-# Permutacijos is GSE50409 dataseto
-expected3 <- c()
-expected3 <- withCluster(
-	foreach(i = 1:n, .combine=cbind) %dopar% {
-		require(limma)
-		computeFit(permute=TRUE, bvals = matrix, cases = group3)
-	}, 
-	nNodes=6
-)
-table(expected3)
 ```
 
-Žiurime, kad reikšmingi (TRUE) lokusai sutaptų tarp permutacijų
+Save Results
 
 ```{r}
-exp_overlaps <- c()
-obs_overlaps <- c()
-for (i in 1:n){
-  exp_overlaps[i] <- sum((expected1[,i] & expected2[,i]) & expected3[,i])
-}
-obs_overlaps <- sum((observed1[,1] & observed2[,1]) & observed3[,1])
-
-```
-
-Rasti persidengimai:
-
-```{r}
-obs_overlaps
-```
-
-Tikėtini persidengimai:
-
-```{r}
-exp_overlaps
-
-hist(exp_overlaps, breaks=20)
-abline(v=obs_overlaps, col="red")
+saveRDS(observed1, file = "GSE19711_fit.RDS")
+saveRDS(expected1, file = "GSE19711_perm.RDS")
 ```
